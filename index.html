@@ -80,8 +80,8 @@
   body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-main); color: var(--text-main); min-height: 100vh; transition: background-color 0.3s ease, color 0.3s ease; }
 
   /* AUTH SCREEN */
-  .auth-wrapper { position: fixed; inset: 0; background: var(--bg-main); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; transition: opacity 0.3s ease; }
-  .auth-card { background: var(--bg-card); padding: 36px 32px; border-radius: var(--radius-lg); box-shadow: var(--shadow-hover); width: 100%; max-width: 420px; text-align: center; border: 1px solid var(--border-color); }
+  .auth-wrapper { position: fixed; inset: 0; background: var(--bg-main); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; transition: opacity 0.3s ease; overflow-y: auto;}
+  .auth-card { background: var(--bg-card); padding: 36px 32px; border-radius: var(--radius-lg); box-shadow: var(--shadow-hover); width: 100%; max-width: 420px; text-align: center; border: 1px solid var(--border-color); margin: auto; }
   .auth-logo { font-size: 28px; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
   .auth-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
   .auth-toggle { font-size: 13px; color: var(--primary); font-weight: 600; cursor: pointer; margin-top: 16px; display: inline-block; }
@@ -253,6 +253,12 @@
   <div class="auth-card" id="formRegister" style="display: none;">
     <div class="auth-logo">📝 Daftar Akun</div>
     <div class="auth-desc">Buat Akun Guru Pengajar Baru</div>
+    
+    <div class="form-group">
+      <label class="form-label" style="color: var(--primary);">PIN / Kode Pendaftaran Sekolah</label>
+      <input type="password" id="regPin" placeholder="Masukkan PIN dari Admin" style="border: 2px solid var(--primary-light);" />
+    </div>
+
     <div class="form-group">
       <label class="form-label">Nama Lengkap Guru (Gelar)</label>
       <input type="text" id="regNama" placeholder="Cth: I Putu Arya, S.Pd." />
@@ -617,8 +623,15 @@ function doRegister() {
   const kelasRaw = document.getElementById('regKelas').value.trim();
   const username = document.getElementById('regUsername').value.trim();
   const pass = document.getElementById('regPassword').value.trim();
+  const pin = document.getElementById('regPin').value.trim();
 
-  if(!nama || !mapel || !kelasRaw || !username || !pass) return alert('Mohon lengkapi semua data!');
+  // KODE RAHASIA ADMIN
+  const KODE_SEKOLAH = "SPIGA2526";
+
+  if(!nama || !mapel || !kelasRaw || !username || !pass || !pin) return alert('Mohon lengkapi semua data!');
+  
+  if(pin !== KODE_SEKOLAH) return alert('PIN / Kode Sekolah salah! Silakan hubungi Admin.');
+
   if(usersList.find(u => u.username === username)) return alert('Username sudah dipakai!');
 
   const kelasArr = kelasRaw.split(',').map(k => k.trim()).filter(k => k);
