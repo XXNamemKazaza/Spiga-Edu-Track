@@ -307,7 +307,7 @@
       </div>
       <div class="nav-section" style="margin-top:12px">Pengaturan</div>
       <div class="nav-item" onclick="showPage('kelola-nilai')">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg> Kelola Nilai Siswa
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg> Kelola Nilai (Edit)
       </div>
       <div class="nav-item" onclick="showPage('siswa')">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg> Kelola Data Siswa
@@ -380,6 +380,10 @@
           <div class="card"><div class="card-header"><span class="card-title">Distribusi Nilai Rata-rata</span></div><div class="chart-wrap"><canvas id="chartNilai"></canvas></div></div>
           <div class="card"><div class="card-header"><span class="card-title">Top 5 Poin Keaktifan</span></div><div class="chart-wrap"><canvas id="chartPoin"></canvas></div></div>
           <div class="card"><div class="card-header"><span class="card-title">Tren Kehadiran (30 hari)</span></div><div class="chart-wrap"><canvas id="chartTren"></canvas></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">💡 Insight & Rekapan Kelas</span></div>
+          <div id="dashInsight" style="font-size: 13.5px; line-height: 1.6; color: var(--text-main);"></div>
         </div>
       </div>
 
@@ -458,10 +462,22 @@
       </div>
 
       <div class="page" id="page-analitik">
-        <div class="filter-bar"><label>Kelas:</label><select id="analitikKelas" onchange="renderAnalitik()" style="width:auto"><option value="">Semua</option></select></div>
+        <div class="filter-bar"><label>Kelas Filter Global:</label><select id="analitikKelas" onchange="renderAnalitik()" style="width:auto"><option value="">Semua</option></select></div>
         <div class="stats-grid" id="analitikStats"></div>
         <div class="charts-grid">
           <div class="card" style="grid-column: 1/-1"><div class="card-header"><span class="card-title">Nilai Rata-rata Per Siswa</span></div><div style="position:relative;height:260px"><canvas id="chartRata"></canvas></div></div>
+          
+          <div class="card" style="grid-column: 1/-1">
+            <div class="card-header">
+              <span class="card-title">Tren Kenaikan Nilai Kelas (Per Sesi)</span>
+              <select id="analitikTrenJenis" onchange="renderAnalitik()" style="width:auto; padding: 4px 8px; font-size:12px;">
+                <option value="ulangan_harian">Ulangan Harian</option>
+                <option value="latihan_soal">Latihan Soal</option>
+              </select>
+            </div>
+            <div style="position:relative;height:240px"><canvas id="chartTrenNilai"></canvas></div>
+          </div>
+
           <div class="card"><div class="card-header"><span class="card-title">Distribusi Nilai</span></div><div class="chart-wrap"><canvas id="chartDistrib"></canvas></div></div>
           <div class="card"><div class="card-header"><span class="card-title">Keaktifan (Poin)</span></div><div class="chart-wrap"><canvas id="chartAktif"></canvas></div></div>
         </div>
@@ -473,11 +489,13 @@
           <select id="knKelas" onchange="renderKelolaNilai()" style="width:auto"><option value="">Semua Kelas</option></select>
           <label>Jenis:</label>
           <select id="knJenis" onchange="renderKelolaNilai()" style="width:auto"><option value="">Semua</option><option value="ulangan_harian">Ulangan Harian</option><option value="latihan_soal">Latihan Soal</option></select>
+          <label>Sesi:</label>
+          <select id="knSesi" onchange="renderKelolaNilai()" style="width:auto"><option value="">Semua Sesi</option></select>
         </div>
         <div class="card">
           <div class="card-header">
             <span class="card-title">Tabel Edit & Hapus Nilai</span>
-            <span style="font-size: 11px; color: var(--text-muted);">*Poin keaktifan dapat diedit langsung di menu Absensi</span>
+            <span style="font-size: 11px; color: var(--text-muted);">*Poin keaktifan diedit di menu Absensi</span>
           </div>
           <div class="table-wrap scroll-table" id="kelolaNilaiWrap"></div>
         </div>
@@ -511,8 +529,8 @@
     <div class="modal-header"><span class="modal-title">Tambah Siswa Massal</span><button class="btn btn-outline btn-sm" onclick="closeModal('modalBulk')">✕</button></div>
     <div class="modal-body">
       <div class="form-group"><label class="form-label">Kelas Default</label><input type="text" id="bulkKelas" placeholder="cth: 7A" class="form-input" /></div>
-      <div class="form-group"><label class="form-label">Data Siswa (Format : Absen  NIS  Nama  Kelas)</label><textarea id="bulkData" style="width:100%;height:150px;font-family:monospace;padding:10px"></textarea></div>
-      <button class="btn btn-outline btn-sm" onclick="previewBulk()">🔍 Validasi</button>
+      <div class="form-group"><label class="form-label">Data Siswa (paste dari Excel)</label><textarea id="bulkData" style="width:100%;height:150px;font-family:monospace;padding:10px"></textarea></div>
+      <button class="btn btn-outline btn-sm" onclick="previewBulk()">🔍 Preview</button>
       <div id="bulkPreview" style="margin-top:12px"></div>
     </div>
     <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('modalBulk')">Batal</button><button class="btn btn-primary" onclick="saveBulk()">Import Semua</button></div>
@@ -584,6 +602,9 @@ function save() {
   schedulePush(); 
 }
 
+// Pemotong nama jadi maksimal 2 kata untuk label grafik
+const shortName = (name) => name.split(' ').slice(0, 2).join(' ');
+
 // ========== AUTHENTICATION LOGIC ==========
 function toggleAuth(type) {
   document.getElementById('formLogin').style.display = type === 'login' ? 'block' : 'none';
@@ -639,16 +660,10 @@ function getInitials(name) {
   return name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
 }
 
-// ========== ISOLATION HELPERS (Only Current Teacher's Data) ==========
-function getMyAbsensi() {
-  return Object.values(absensiData).filter(a => a.guruId === currentUser.id);
-}
-function getMyNilai() {
-  return Object.values(nilaiData).filter(n => n.guruId === currentUser.id);
-}
-function getAbsenKey(siswaId, tanggal) { 
-  return currentUser.id + '_' + siswaId + '_' + tanggal; 
-}
+// ========== ISOLATION HELPERS ==========
+function getMyAbsensi() { return Object.values(absensiData).filter(a => a.guruId === currentUser.id); }
+function getMyNilai() { return Object.values(nilaiData).filter(n => n.guruId === currentUser.id); }
+function getAbsenKey(siswaId, tanggal) { return currentUser.id + '_' + siswaId + '_' + tanggal; }
 
 
 // ========== INIT APP LOGIC ==========
@@ -688,12 +703,12 @@ function initAppUI() {
   if(!document.getElementById('absenDate').value) document.getElementById('absenDate').value = today;
 
   rebuildKelasOptions();
-  showPage(activePage); // Gunakan localStorage page agar tidak loncat ke dashboard
+  showPage(activePage);
 }
 
 function rebuildKelasOptions() {
   if(!currentUser) return;
-  const kelasList = currentUser.kelas || []; // Master option dropdown hanya dari kelas yang diajar
+  const kelasList = currentUser.kelas || [];
   
   const totalMurid = siswaList.filter(s => kelasList.includes(s.kelas)).length;
   document.getElementById('pmTotalSiswa').innerText = totalMurid + ' Siswa';
@@ -725,12 +740,10 @@ function showPage(id) {
   const menuMap = {'dashboard':'Dashboard', 'absensi':'Absensi & Poin', 'nilai':'Input Nilai', 'daftar':'Daftar Siswa Master', 'analitik':'Analitik & Grafik', 'siswa':'Kelola Data Siswa', 'kelola-nilai':'Kelola Nilai (Edit)'};
   document.getElementById('pageTitle').textContent = menuMap[id] || id;
   
-  // Update active sidebar style safely
   document.querySelectorAll('.nav-item').forEach(n => {
     if(n.getAttribute('onclick') && n.getAttribute('onclick').includes(id)) n.classList.add('active');
   });
   
-  // FIX: Save active page to prevent jumping on refresh
   activePage = id;
   DB.set('activePage', activePage);
   refreshActivePage();
@@ -749,7 +762,7 @@ function refreshActivePage() {
 
 // ========== STAT HELPERS (Isolated) ==========
 function getFilteredSiswa(kelas='') {
-  let list = siswaList.filter(s => (currentUser.kelas||[]).includes(s.kelas)); // Hanya tampilkan anak didik guru ini
+  let list = siswaList.filter(s => (currentUser.kelas||[]).includes(s.kelas)); 
   if(kelas) list = list.filter(s => s.kelas === kelas);
   return list;
 }
@@ -822,7 +835,7 @@ function renderDashboard() {
   const avgNilai = filteredSiswa.length ? Math.round(filteredSiswa.reduce((s,sw) => s+getRataValue(sw.id), 0)/filteredSiswa.length) : 0;
 
   document.getElementById('dashStats').innerHTML = `
-    <div class="stat-card blue"><div class="stat-label">Siswa Diajar</div><div class="stat-value">${filteredSiswa.length}</div><div class="stat-sub">${[...new Set(filteredSiswa.map(s=>s.kelas))].length} kelas</div></div>
+    <div class="stat-card blue"><div class="stat-label">Siswa Diajar</div><div class="stat-value">${filteredSiswa.length}</div><div class="stat-sub">${[...new Set(filteredSiswa.map(s=>s.kelas))].length} kelas ditinjau</div></div>
     <div class="stat-card green">
       <div class="stat-label">Hadir Hari Ini</div>
       <div class="stat-value">${hadir}</div>
@@ -862,7 +875,7 @@ function renderDashboard() {
   const top5 = sortList(filteredSiswa, 'poin_desc').slice(0,5);
   if(chartPoin) chartPoin.destroy();
   chartPoin = new Chart(document.getElementById('chartPoin'), {
-    type:'bar', data:{labels:top5.map(s=>s.nama), datasets:[{label:'Poin',data:top5.map(s=>getTotalPoin(s.id)),backgroundColor:'#7c3aed',borderRadius:6}]},
+    type:'bar', data:{labels:top5.map(s=>shortName(s.nama)), datasets:[{label:'Poin',data:top5.map(s=>getTotalPoin(s.id)),backgroundColor:'#7c3aed',borderRadius:6}]},
     options:{ indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}} }
   });
 
@@ -874,19 +887,35 @@ function renderDashboard() {
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{max:100,ticks:{callback:v=>v+'%'}}}}
   });
 
-  // Perhatian Khusus
-  const perhatianArr = [];
-  filteredSiswa.forEach(s => {
-    const alphaCount = getMyAbsensi().filter(a => a.siswaId === s.id && a.status === 'A').length;
-    const rata = getRataValue(s.id);
-    let alasan = [];
-    if (alphaCount > 3) alasan.push(`Alpha (${alphaCount}x)`);
-    if (rata > 0 && rata < 65) alasan.push(`Nilai Kecil (${rata})`);
-    if (alasan.length) perhatianArr.push({ s, alasan: alasan.join(', ') });
-  });
+  // ========== INSIGHT & REKAPAN KELAS ==========
+  let insightText = '';
+  if(filteredSiswa.length === 0) {
+    insightText = 'Belum ada data siswa untuk kelas ini. Silakan kelola di menu Kelola Data Siswa.';
+  } else {
+    let sakitList = [], izinList = [], alphaList = [];
+    filteredSiswa.forEach(s => {
+      let s_count = getMyAbsensi().filter(a => a.siswaId === s.id && a.status === 'S').length;
+      let i_count = getMyAbsensi().filter(a => a.siswaId === s.id && a.status === 'I').length;
+      let a_count = getMyAbsensi().filter(a => a.siswaId === s.id && a.status === 'A').length;
+      if(s_count > 3) sakitList.push(`<strong>${shortName(s.nama)}</strong> (${s_count}x)`);
+      if(i_count > 3) izinList.push(`<strong>${shortName(s.nama)}</strong> (${i_count}x)`);
+      if(a_count > 3) alphaList.push(`<strong>${shortName(s.nama)}</strong> (${a_count}x)`);
+    });
 
-  document.getElementById('badgePerhatian').textContent = perhatianArr.length + ' siswa';
-  document.getElementById('tablePerhatian').innerHTML = perhatianArr.length ? `<div class="table-wrap"><table><thead><tr><th>Nama</th><th>Kelas</th><th>Keterangan</th></tr></thead><tbody>${perhatianArr.map(p=>`<tr><td><strong>${p.s.nama}</strong></td><td>${p.s.kelas}</td><td><span style="color:var(--danger);font-size:12px;font-weight:600">${p.alasan}</span></td></tr>`).join('')}</tbody></table></div>` : `<div class="empty-state" style="padding:20px"><p>Semua siswa dalam kondisi baik 🎉</p></div>`;
+    insightText += `Berdasarkan filter saat ini, rata-rata pencapaian nilai siswa berada di angka <strong style="color:var(--primary)">${avgNilai}</strong> dengan akumulasi keaktifan sebanyak <strong style="color:var(--purple)">${totalPoin} poin</strong>. `;
+    
+    let peringatan = [];
+    if(alphaList.length) peringatan.push(`Siswa sering Alpha: ${alphaList.join(', ')}`);
+    if(sakitList.length) peringatan.push(`Siswa sering Sakit: ${sakitList.join(', ')}`);
+    if(izinList.length) peringatan.push(`Siswa sering Izin: ${izinList.join(', ')}`);
+    
+    if(peringatan.length) {
+      insightText += `<br><br><span style="color:var(--danger)">⚠️ <strong>Perlu Perhatian Kehadiran (>3x):</strong><br> - ${peringatan.join('<br> - ')}</span>`;
+    } else {
+      insightText += `<br><br><span style="color:var(--success)">✅ <strong>Status Kehadiran Aman:</strong> Tidak ada siswa di filter ini yang terpantau bolos, sakit, atau izin lebih dari 3 kali.</span>`;
+    }
+  }
+  document.getElementById('dashInsight').innerHTML = insightText;
 }
 
 // ========== ABSENSI ==========
@@ -925,26 +954,37 @@ function simpanNilai() { const kelas = document.getElementById('nilaiKelas').val
 function parsePaste() { const raw = document.getElementById('paste-area').value.trim(); const kelas = document.getElementById('pasteKelas').value; if(!kelas) return alert('Pilih kelas dulu!'); const lines = raw.split('\n').filter(l=>l.trim()); pasteParsed = []; const errors = []; lines.forEach((line, i) => { const cols = line.split(/\t|,/).map(c=>c.trim()); if(cols.length < 2) { errors.push(`Baris ${i+1}: format salah`); return; } let nis, nama, nilai; if(cols.length >= 3) { nis=cols[0]; nama=cols[1]; nilai=parseFloat(cols[2]); } else { nama=cols[0]; nilai=parseFloat(cols[1]); } const found = siswaList.find(s => s.kelas===kelas && (s.nis===nis || s.nama.toLowerCase()===nama.toLowerCase())); if(!found) { errors.push(`Baris ${i+1}: siswa tidak ditemukan`); return; } if(isNaN(nilai)) { errors.push(`Baris ${i+1}: nilai tidak valid`); return; } pasteParsed.push({siswa:found, nilai}); }); let html = ''; if(pasteParsed.length) html += `<div class="badge badge-success" style="margin-bottom:8px">${pasteParsed.length} data valid ✓</div>`; if(errors.length) html += `<div style="margin-top:10px">${errors.map(e=>`<div class="badge badge-danger" style="margin-bottom:4px;display:block">${e}</div>`).join('')}</div>`; document.getElementById('paste-preview').innerHTML = html; document.getElementById('paste-actions').style.display = pasteParsed.length ? 'block' : 'none'; }
 function importPaste() { const jenis = document.getElementById('pasteJenis').value; const sesi = document.getElementById('pasteSesi').value.trim() || 'Import'; const kelas = document.getElementById('pasteKelas').value; pasteParsed.forEach(p => { const key = currentUser.id+'_'+p.siswa.id+'_'+jenis+'_'+sesi.replace(/\s+/g,'_'); nilaiData[key] = {guruId:currentUser.id, siswaId:p.siswa.id, jenis, sesi, nilai:p.nilai, kelas, tanggal:new Date().toISOString().split('T')[0]}; }); save(); showToast(pasteParsed.length+' nilai diimport!'); pasteParsed=[]; document.getElementById('paste-preview').innerHTML=''; document.getElementById('paste-actions').style.display='none'; document.getElementById('paste-area').value=''; }
 
-function renderLihatNilai() { const kelas = document.getElementById('lihatKelas').value; const jenis = document.getElementById('lihatJenis').value; const sortType = document.getElementById('lihatSort').value; let list = getFilteredSiswa(kelas); list = sortList(list, sortType); const myNilai = getMyNilai().filter(n => (!kelas||n.kelas===kelas) && (!jenis||n.jenis===jenis)); const sesiSet = [...new Set(myNilai.map(n=>n.jenis+'|'+n.sesi))].sort(); if(!list.length) { document.getElementById('lihatNilaiWrap').innerHTML='<div class="empty-state"><p>Belum ada data di kelas ini</p></div>'; return; } const cols = sesiSet.map(s => { const [j,nm]=s.split('|'); return {key:s, jenis:j, nama:nm}; }); document.getElementById('lihatNilaiWrap').innerHTML = `<table><thead><tr><th>No</th><th>Nama</th><th>Kelas</th>${cols.map(c=>`<th title="${c.jenis}">${c.nama}</th>`).join('')}<th>Rata-rata</th></tr></thead><tbody>${list.map(s=>{ const vals = cols.map(c => { const [j,nm]=c.key.split('|'); const k=currentUser.id+'_'+s.id+'_'+j+'_'+nm.replace(/\s+/g,'_'); return nilaiData[k] ? nilaiData[k].nilai : null; }); const filled = vals.filter(v=>v!==null); const rata = filled.length ? Math.round(filled.reduce((a,b)=>a+b,0)/filled.length) : 0; const rataBadge = rata>=80?'badge-success':rata>=65?'badge-warning':'badge-danger'; return `<tr><td>${s.noAbsen||'-'}</td><td>${s.nama}</td><td>${s.kelas}</td>${vals.map(v=>`<td>${v!==null?v:'—'}</td>`).join('')}<td><span class="badge ${rataBadge}">${rata||'—'}</span></td></tr>`; }).join('')}</tbody></table>`; }
+function renderLihatNilai() { const kelas = document.getElementById('lihatKelas').value; const jenis = document.getElementById('lihatJenis').value; const sortType = document.getElementById('lihatSort').value; let list = getFilteredSiswa(kelas); list = sortList(list, sortType); const myNilai = getMyNilai().filter(n => (!kelas||n.kelas===kelas) && (!jenis||n.jenis===jenis)); const sesiSet = [...new Set(myNilai.map(n=>n.jenis+'|'+n.sesi))].sort(); if(!list.length) { document.getElementById('lihatNilaiWrap').innerHTML='<div class="empty-state"><p>Belum ada data di kelas ini</p></div>'; return; } const cols = sesiSet.map(s => { const [j,nm]=s.split('|'); return {key:s, jenis:j, nama:nm}; }); document.getElementById('lihatNilaiWrap').innerHTML = `<table><thead><tr><th>No</th><th>Nama</th><th>Kelas</th>${cols.map(c=>`<th title="${c.jenis}">${c.nama}</th>`).join('')}<th>Rata-rata</th></tr></thead><tbody>${list.map(s=>{ const vals = cols.map(c => { const [j,nm]=c.key.split('|'); const k=currentUser.id+'_'+s.id+'_'+j+'_'+nm.replace(/\s+/g,'_'); return nilaiData[k] ? nilaiData[k].nilai : null; }); const filled = vals.filter(v=>v!==null); const rata = filled.length ? Math.round(filled.reduce((a,b)=>a+b,0)/filled.length) : 0; const rataBadge = rata>=80?'badge-success':rata>=65?'badge-warning':'badge-danger'; return `<tr><td>${s.noAbsen||'-'}</td><td>${shortName(s.nama)}</td><td>${s.kelas}</td>${vals.map(v=>`<td>${v!==null?v:'—'}</td>`).join('')}<td><span class="badge ${rataBadge}">${rata||'—'}</span></td></tr>`; }).join('')}</tbody></table>`; }
 
 // ========== KELOLA NILAI (EDIT) ==========
 function renderKelolaNilai() {
   const kelas = document.getElementById('knKelas').value;
   const jenis = document.getElementById('knJenis').value;
   
-  // Tampilkan data nilai milik guru ini
   let myNilai = getMyNilai();
   if (kelas) myNilai = myNilai.filter(n => n.kelas === kelas);
   if (jenis) myNilai = myNilai.filter(n => n.jenis === jenis);
 
-  // Sorting berdasarkan tanggal terbaru
-  myNilai.sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
+  // Otomatis update Dropdown Sesi berdasarkan data yg tersaring
+  const availableSesis = [...new Set(myNilai.map(n => n.sesi))].sort();
+  const selSesi = document.getElementById('knSesi');
+  const currentSesi = selSesi.value;
+  selSesi.innerHTML = '<option value="">Semua Sesi</option>';
+  availableSesis.forEach(s => { selSesi.innerHTML += `<option value="${s}">${s}</option>`; });
+  
+  // Kembalikan pilihan user jika sesi masih relevan
+  if(availableSesis.includes(currentSesi)) selSesi.value = currentSesi; 
+  else selSesi.value = "";
 
+  // Terapkan Filter Sesi
+  const sesiFilter = selSesi.value;
+  if(sesiFilter) myNilai = myNilai.filter(n => n.sesi === sesiFilter);
+
+  myNilai.sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal)); // Sorting terbaru
   if(!myNilai.length) { document.getElementById('kelolaNilaiWrap').innerHTML = '<div class="empty-state"><p>Belum ada rekaman nilai.</p></div>'; return; }
   
   let html = `<table><thead><tr><th>Tanggal</th><th>Kelas</th><th>Siswa</th><th>Jenis</th><th>Sesi</th><th>Nilai</th><th>Aksi</th></tr></thead><tbody>`;
   myNilai.forEach(n => {
-    // Cari object key aslinya
     const key = Object.keys(nilaiData).find(k => nilaiData[k] === n);
     const s = siswaList.find(sw => sw.id === n.siswaId);
     if(!s || !key) return;
@@ -952,7 +992,7 @@ function renderKelolaNilai() {
     html += `<tr>
       <td>${n.tanggal}</td>
       <td>${n.kelas}</td>
-      <td><strong>${s.nama}</strong></td>
+      <td><strong>${shortName(s.nama)}</strong></td>
       <td>${n.jenis === 'ulangan_harian' ? 'UH' : 'Latihan'}</td>
       <td>${n.sesi}</td>
       <td><input type="number" id="edit_val_${key}" value="${n.nilai}" style="width:60px; padding:4px; text-align:center;"></td>
@@ -970,17 +1010,11 @@ function simpanEditNilai(key) {
   const el = document.getElementById('edit_val_'+key);
   if(el && nilaiData[key]) {
     nilaiData[key].nilai = parseFloat(el.value);
-    save();
-    showToast('Nilai berhasil diupdate!');
+    save(); showToast('Nilai berhasil diupdate!');
   }
 }
 function hapusSatuNilai(key) {
-  if(confirm('Yakin hapus nilai ini?')) {
-    delete nilaiData[key];
-    save();
-    renderKelolaNilai();
-    showToast('Nilai dihapus.');
-  }
+  if(confirm('Yakin hapus nilai ini?')) { delete nilaiData[key]; save(); renderKelolaNilai(); showToast('Nilai dihapus.'); }
 }
 
 // ========== DAFTAR MASTER ==========
@@ -996,13 +1030,44 @@ function renderAnalitik() {
   
   let listSortRata = sortList(list, 'rata_desc').slice(0,20);
   if(chartRata) chartRata.destroy();
-  chartRata = new Chart(document.getElementById('chartRata'), { type:'bar', data:{labels:listSortRata.map(s=>s.nama),datasets:[{label:'Rata-rata',data:listSortRata.map(s=>getRataValue(s.id)),backgroundColor:'#3b82f6',borderRadius:6}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}} });
+  chartRata = new Chart(document.getElementById('chartRata'), { type:'bar', data:{labels:listSortRata.map(s=>shortName(s.nama)),datasets:[{label:'Rata-rata',data:listSortRata.map(s=>getRataValue(s.id)),backgroundColor:'#3b82f6',borderRadius:6}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}} });
   
   const dist=[0,0,0,0,0]; list.forEach(s=>{const v=getRataValue(s.id);if(v){if(v<60)dist[0]++;else if(v<70)dist[1]++;else if(v<80)dist[2]++;else if(v<90)dist[3]++;else dist[4]++;}});
   if(chartDistrib2) chartDistrib2.destroy(); chartDistrib2 = new Chart(document.getElementById('chartDistrib'), { type:'bar', data:{labels:['<60','60-69','70-79','80-89','90+'],datasets:[{data:dist,backgroundColor:['#ef4444','#f59734','#eab308','#22c55e','#3b82f6'],borderRadius:6}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}} });
   
   const top10 = sortList(list,'poin_desc').slice(0,10);
-  if(chartAktif2) chartAktif2.destroy(); chartAktif2 = new Chart(document.getElementById('chartAktif'), { type:'bar', data:{labels:top10.map(s=>s.nama),datasets:[{label:'Poin',data:top10.map(s=>getTotalPoin(s.id)),backgroundColor:'#7c3aed',borderRadius:6}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}} });
+  if(chartAktif2) chartAktif2.destroy(); chartAktif2 = new Chart(document.getElementById('chartAktif'), { type:'bar', data:{labels:top10.map(s=>shortName(s.nama)),datasets:[{label:'Poin',data:top10.map(s=>getTotalPoin(s.id)),backgroundColor:'#7c3aed',borderRadius:6}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}} });
+
+  // TREND NAIK/TURUN NILAI LINE CHART
+  const trenJenis = document.getElementById('analitikTrenJenis').value;
+  let myNilaiForTrend = getMyNilai().filter(n => n.jenis === trenJenis);
+  if(kelas) myNilaiForTrend = myNilaiForTrend.filter(n => n.kelas === kelas);
+  
+  const sesis = [...new Set(myNilaiForTrend.map(n => n.sesi))].sort();
+  const avgPerSesi = sesis.map(sesi => {
+      const nilaiSesi = myNilaiForTrend.filter(n => n.sesi === sesi);
+      return Math.round(nilaiSesi.reduce((a,b)=>a+b.nilai, 0) / nilaiSesi.length) || 0;
+  });
+
+  if(window.chartTrenNilaiVar) window.chartTrenNilaiVar.destroy();
+  window.chartTrenNilaiVar = new Chart(document.getElementById('chartTrenNilai'), {
+      type: 'line',
+      data: {
+          labels: sesis.length ? sesis : ['Belum ada sesi'],
+          datasets: [{
+              label: `Rata-rata Kelas (${trenJenis === 'ulangan_harian' ? 'UH' : 'Latihan'})`,
+              data: sesis.length ? avgPerSesi : [0],
+              borderColor: '#7c3aed',
+              backgroundColor: 'rgba(124, 58, 237, 0.15)',
+              fill: true, tension: 0.3, pointRadius: 5, pointHoverRadius: 7
+          }]
+      },
+      options: { 
+        responsive:true, maintainAspectRatio:false, 
+        plugins:{legend:{display:false}}, 
+        scales:{y:{min:0, max:100}} 
+      }
+  });
 }
 
 // ========== KELOLA DATA SISWA ==========
@@ -1040,7 +1105,6 @@ async function doExport() {
   doc.setFontSize(24); doc.setFont('helvetica', 'bold'); doc.setTextColor(31, 41, 55); doc.text(judul.toUpperCase(), pw/2, ph/2 - 20, {align: 'center'});
   doc.setFontSize(14); doc.setFont('helvetica', 'bold'); doc.setTextColor(37, 99, 235); doc.text('SMP PGRI 3 DENPASAR', pw/2, ph/2 + 18, {align: 'center'});
   
-  // NEW: Info Guru & Mapel
   doc.setFontSize(12); doc.setFont('helvetica', 'normal'); doc.setTextColor(107, 114, 128);
   doc.text('Guru: ' + currentUser.nama + '  |  Mapel: ' + currentUser.mapel, pw/2, ph/2 + 28, {align: 'center'});
   doc.text('Tahun Ajaran 2025/2026', pw/2, ph/2 + 36, {align: 'center'});
@@ -1097,7 +1161,6 @@ async function pullFromCloud() {
     DB.set('absensi', absensiData);
     DB.set('nilai', nilaiData);
     
-    // Perbaikan: Jangan redirect saat sync! Cukup update ulang element tabel di halaman yg sedang aktif.
     if(currentUser) refreshActivePage();
 
     setSyncStatus('ok'); return true;
