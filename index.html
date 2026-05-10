@@ -2,7 +2,7 @@
 <html lang="id" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>SPIGA EduTrack — Sistem Absensi & Nilai Siswa</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -213,19 +213,42 @@
   .sort-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-card); font-size: 12px; font-weight: 600; cursor: pointer; color: var(--text-muted); }
   .sort-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 6px rgba(37,99,235,.2); }
 
-  /* MOBILE */
+  /* ==================================================
+     MOBILE OPTIMIZATIONS (100% RESPONSIVE)
+     ================================================== */
   .hamburger { display: none; background: none; border: none; cursor: pointer; padding: 6px; color: var(--text-main); }
   @media (max-width: 768px) {
+    /* Layout Inti */
     .sidebar { transform: translateX(-100%); }
     .sidebar.open { transform: translateX(0); }
-    .main { margin-left: 0; }
+    .main { margin-left: 0; width: 100%; max-width: 100vw; overflow-x: hidden; } /* Cegah bocor samping */
     .hamburger { display: block; }
+    
+    /* Topbar */
+    .topbar { flex-direction: column; align-items: stretch; padding: 12px 16px; gap: 12px; }
+    .topbar-title { font-size: 22px; }
+    .topbar-right { width: 100%; justify-content: space-between; flex-wrap: wrap; gap: 8px;}
+    #syncText { display: none; } /* Sembunyikan teks sync agar hemat ruang, titiknya tetap */
+    
+    /* Filter Bar full width form */
+    .filter-bar { flex-direction: column; align-items: stretch; }
+    .filter-bar select, .filter-bar input { width: 100% !important; max-width: 100%; }
+    .filter-bar label { margin-bottom: -5px; }
+    
+    /* Grid system */
     .form-row { grid-template-columns: 1fr; }
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid { grid-template-columns: 1fr; }
+    
+    /* Absensi Row Adjustments */
     .absen-row { grid-template-columns: 32px 1fr; }
-    .absen-status { grid-column: 1 / -1; }
+    .absen-status { grid-column: 1 / -1; margin-top: 5px; }
+    
+    /* Modals & Overlays */
     .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 99; backdrop-filter: blur(2px); }
     .overlay.open { display: block; }
+    .auth-card { padding: 24px; margin: 15px; width: auto;}
+    .card { padding: 16px; }
   }
 
   .empty-state { text-align: center; padding: 48px 24px; color: var(--gray-400); animation: smoothSlideUp 0.5s ease forwards; }
@@ -437,7 +460,7 @@
               <div class="form-group"><label class="form-label">Kelas Tujuan</label><select id="pasteKelas" class="form-input"><option value="">Pilih Kelas</option></select></div>
               <div class="form-group"><label class="form-label">Jenis Nilai</label><select id="pasteJenis" class="form-input"><option value="ulangan_harian">Ulangan Harian</option><option value="latihan_soal">Latihan Soal</option></select></div>
               <div class="form-group"><label class="form-label">Nama Sesi (UH1, Latihan Bab 3, dst)</label><input type="text" id="pasteSesi" class="form-input" placeholder="UH1" /></div>
-              <div class="form-group"><label class="form-label">Paste Data dari Excel</label><p style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Format kolom: <strong>NIS | Nama | Nilai</strong> (pisahkan dengan tab, 1 baris = 1 siswa)</p><textarea id="paste-area" style="width:100%;height:120px;font-family:monospace;padding:10px" placeholder="001&#9;Ahmad Rizki&#9;85"></textarea></div>
+              <div class="form-group"><label class="form-label">Paste Data dari Excel</label><p style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Format kolom: <strong>No. Absen | Nama | Nilai</strong> (pisahkan dengan tab, 1 baris = 1 siswa)</p><textarea id="paste-area" style="width:100%;height:120px;font-family:monospace;padding:10px" placeholder="1&#9;Ahmad Rizki&#9;85"></textarea></div>
               <button class="btn btn-primary" onclick="parsePaste()" style="margin-bottom:16px">🔍 Preview & Validasi</button>
               <div id="paste-preview"></div>
               <div id="paste-actions" style="display:none;margin-top:12px"><button class="btn btn-success" onclick="importPaste()">✅ Import Nilai</button></div>
@@ -469,8 +492,8 @@
 
       <div class="page" id="page-analitik">
         <div class="filter-bar"><label>Kelas Filter Global:</label><select id="analitikKelas" onchange="renderAnalitik()" style="width:auto"><option value="">Semua</option></select></div>
-        <div class="stats-grid" id="analitikStats"></div>
-        <div class="charts-grid">
+        <div id="analitikStats" class="stats-grid"></div>
+        <div class="charts-grid" style="display: grid;">
           <div class="card" style="grid-column: 1/-1"><div class="card-header"><span class="card-title">Nilai Rata-rata Per Siswa</span></div><div style="position:relative;height:260px"><canvas id="chartRata"></canvas></div></div>
           
           <div class="card" style="grid-column: 1/-1">
@@ -964,7 +987,33 @@ function switchTab(tab) { ['manual','paste','lihat'].forEach(t => { document.get
 function renderNilaiTable() { const kelas = document.getElementById('nilaiKelas').value; if(!kelas) { document.getElementById('nilaiTableWrap').innerHTML = '<div class="empty-state"><p>Pilih kelas terlebih dahulu</p></div>'; return; } const list = getFilteredSiswa(kelas).sort((a,b)=>(a.noAbsen||0)-(b.noAbsen||0)); document.getElementById('nilaiTableWrap').innerHTML = `<table><thead><tr><th>No</th><th>NIS</th><th>Nama</th><th>Nilai (0-100)</th></tr></thead><tbody>${list.map(s=>`<tr><td>${s.noAbsen||'-'}</td><td>${s.nis}</td><td>${s.nama}</td><td><input type="number" id="nv_${s.id}" min="0" max="100" placeholder="—" style="width:70px;text-align:center" /></td></tr>`).join('')}</tbody></table>`; }
 function simpanNilai() { const kelas = document.getElementById('nilaiKelas').value; const jenis = document.getElementById('nilaiJenis').value; const sesi = document.getElementById('nilaiSesi').value.trim() || ('Sesi_'+Date.now()); if(!kelas) return alert('Pilih kelas dulu!'); let count=0; getFilteredSiswa(kelas).forEach(s => { const el = document.getElementById('nv_'+s.id); if(!el || el.value==='') return; const key = currentUser.id+'_'+s.id+'_'+jenis+'_'+sesi.replace(/\s+/g,'_'); nilaiData[key] = {guruId:currentUser.id, siswaId:s.id, jenis, sesi, nilai:parseFloat(el.value), kelas, tanggal:new Date().toISOString().split('T')[0]}; count++; }); save(); showToast(count+' nilai berhasil disimpan!'); }
 
-function parsePaste() { const raw = document.getElementById('paste-area').value.trim(); const kelas = document.getElementById('pasteKelas').value; if(!kelas) return alert('Pilih kelas dulu!'); const lines = raw.split('\n').filter(l=>l.trim()); pasteParsed = []; const errors = []; lines.forEach((line, i) => { const cols = line.split(/\t|,/).map(c=>c.trim()); if(cols.length < 2) { errors.push(`Baris ${i+1}: format salah`); return; } let nis, nama, nilai; if(cols.length >= 3) { nis=cols[0]; nama=cols[1]; nilai=parseFloat(cols[2]); } else { nama=cols[0]; nilai=parseFloat(cols[1]); } const found = siswaList.find(s => s.kelas===kelas && (s.nis===nis || s.nama.toLowerCase()===nama.toLowerCase())); if(!found) { errors.push(`Baris ${i+1}: siswa tidak ditemukan`); return; } if(isNaN(nilai)) { errors.push(`Baris ${i+1}: nilai tidak valid`); return; } pasteParsed.push({siswa:found, nilai}); }); let html = ''; if(pasteParsed.length) html += `<div class="badge badge-success" style="margin-bottom:8px">${pasteParsed.length} data valid ✓</div>`; if(errors.length) html += `<div style="margin-top:10px">${errors.map(e=>`<div class="badge badge-danger" style="margin-bottom:4px;display:block">${e}</div>`).join('')}</div>`; document.getElementById('paste-preview').innerHTML = html; document.getElementById('paste-actions').style.display = pasteParsed.length ? 'block' : 'none'; }
+function parsePaste() { 
+  const raw = document.getElementById('paste-area').value.trim(); 
+  const kelas = document.getElementById('pasteKelas').value; 
+  if(!kelas) return alert('Pilih kelas dulu!'); 
+  const lines = raw.split('\n').filter(l=>l.trim()); 
+  pasteParsed = []; const errors = []; 
+  lines.forEach((line, i) => { 
+    const cols = line.split(/\t|,/).map(c=>c.trim()); 
+    if(cols.length < 2) { errors.push(`Baris ${i+1}: format salah`); return; } 
+    let noAbsen, nama, nilai; 
+    
+    // Perbaikan Input Format: No Absen | Nama | Nilai
+    if(cols.length >= 3) { noAbsen=parseInt(cols[0]); nama=cols[1]; nilai=parseFloat(cols[2]); } 
+    else { nama=cols[0]; nilai=parseFloat(cols[1]); } 
+    
+    const found = siswaList.find(s => s.kelas===kelas && (s.noAbsen===noAbsen || s.nama.toLowerCase()===nama.toLowerCase())); 
+    if(!found) { errors.push(`Baris ${i+1}: siswa tidak ditemukan`); return; } 
+    if(isNaN(nilai)) { errors.push(`Baris ${i+1}: nilai tidak valid`); return; } 
+    pasteParsed.push({siswa:found, nilai}); 
+  }); 
+  let html = ''; 
+  if(pasteParsed.length) html += `<div class="badge badge-success" style="margin-bottom:8px">${pasteParsed.length} data valid ✓</div>`; 
+  if(errors.length) html += `<div style="margin-top:10px">${errors.map(e=>`<div class="badge badge-danger" style="margin-bottom:4px;display:block">${e}</div>`).join('')}</div>`; 
+  document.getElementById('paste-preview').innerHTML = html; 
+  document.getElementById('paste-actions').style.display = pasteParsed.length ? 'block' : 'none'; 
+}
+
 function importPaste() { const jenis = document.getElementById('pasteJenis').value; const sesi = document.getElementById('pasteSesi').value.trim() || 'Import'; const kelas = document.getElementById('pasteKelas').value; pasteParsed.forEach(p => { const key = currentUser.id+'_'+p.siswa.id+'_'+jenis+'_'+sesi.replace(/\s+/g,'_'); nilaiData[key] = {guruId:currentUser.id, siswaId:p.siswa.id, jenis, sesi, nilai:p.nilai, kelas, tanggal:new Date().toISOString().split('T')[0]}; }); save(); showToast(pasteParsed.length+' nilai diimport!'); pasteParsed=[]; document.getElementById('paste-preview').innerHTML=''; document.getElementById('paste-actions').style.display='none'; document.getElementById('paste-area').value=''; }
 
 function renderLihatNilai() { const kelas = document.getElementById('lihatKelas').value; const jenis = document.getElementById('lihatJenis').value; const sortType = document.getElementById('lihatSort').value; let list = getFilteredSiswa(kelas); list = sortList(list, sortType); const myNilai = getMyNilai().filter(n => (!kelas||n.kelas===kelas) && (!jenis||n.jenis===jenis)); const sesiSet = [...new Set(myNilai.map(n=>n.jenis+'|'+n.sesi))].sort(); if(!list.length) { document.getElementById('lihatNilaiWrap').innerHTML='<div class="empty-state"><p>Belum ada data di kelas ini</p></div>'; return; } const cols = sesiSet.map(s => { const [j,nm]=s.split('|'); return {key:s, jenis:j, nama:nm}; }); document.getElementById('lihatNilaiWrap').innerHTML = `<table><thead><tr><th>No</th><th>Nama</th><th>Kelas</th>${cols.map(c=>`<th title="${c.jenis}">${c.nama}</th>`).join('')}<th>Rata-rata</th></tr></thead><tbody>${list.map(s=>{ const vals = cols.map(c => { const [j,nm]=c.key.split('|'); const k=currentUser.id+'_'+s.id+'_'+j+'_'+nm.replace(/\s+/g,'_'); return nilaiData[k] ? nilaiData[k].nilai : null; }); const filled = vals.filter(v=>v!==null); const rata = filled.length ? Math.round(filled.reduce((a,b)=>a+b,0)/filled.length) : 0; const rataBadge = rata>=80?'badge-success':rata>=65?'badge-warning':'badge-danger'; return `<tr><td>${s.noAbsen||'-'}</td><td>${shortName(s.nama)}</td><td>${s.kelas}</td>${vals.map(v=>`<td>${v!==null?v:'—'}</td>`).join('')}<td><span class="badge ${rataBadge}">${rata||'—'}</span></td></tr>`; }).join('')}</tbody></table>`; }
@@ -1037,7 +1086,17 @@ function renderDaftar() { const kelas = document.getElementById('daftarKelas').v
 function renderAnalitik() {
   const kelas = document.getElementById('analitikKelas').value;
   let list = getFilteredSiswa(kelas);
-  if(!list.length) { document.getElementById('analitikStats').innerHTML='<div class="empty-state"><p>Belum ada data siswa</p></div>'; return; }
+  
+  const chartsContainer = document.querySelector('#page-analitik .charts-grid');
+  const statsContainer = document.getElementById('analitikStats');
+  
+  if(!list.length) { 
+    statsContainer.innerHTML='<div class="empty-state" style="grid-column: 1/-1;"><p>Belum ada data siswa di kelas ini</p></div>'; 
+    chartsContainer.style.display = 'none';
+    return; 
+  }
+  chartsContainer.style.display = 'grid';
+
   const rataArr = list.map(s=>getRataValue(s.id)).filter(v=>v>0);
   const avgNilai = rataArr.length ? Math.round(rataArr.reduce((a,b)=>a+b,0)/rataArr.length) : 0;
   
