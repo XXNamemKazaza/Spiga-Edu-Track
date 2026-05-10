@@ -1063,16 +1063,25 @@ async function pullFromCloud() {
     const data = await res.json();
     if(!data.success) throw new Error(data.error || 'Gagal');
 
-    // Cloud adalah sumber kebenaran — replace langsung
-if(Array.isArray(data.siswa)) {
-  siswaList = data.siswa;
-}
-if(data.absensi) {
-  absensiData = data.absensi;
-}
-if(data.nilai) {
-  nilaiData = data.nilai;
-}
+    // Merge: cloud wins, tapi jangan hapus data lokal yang lebih baru
+    if(Array.isArray(data.siswa)) {
+      siswaList = data.siswa;
+    }
+    
+    // PERBAIKAN: Bersihkan tanda petik / format aneh dari tanggal
+    if(data.absensi && Object.keys(data.absensi).length > 0) {
+      Object.values(data.absensi).forEach(a => {
+        if(a.tanggal) a.tanggal = String(a.tanggal).replace(/'/g, '').split('T')[0];
+      });
+      absensiData = data.absensi;
+    }
+    
+    if(data.nilai && Object.keys(data.nilai).length > 0) {
+      Object.values(data.nilai).forEach(n => {
+        if(n.tanggal) n.tanggal = String(n.tanggal).replace(/'/g, '').split('T')[0];
+      });
+      nilaiData = data.nilai;
+    }
 
     // Simpan ke localStorage juga sebagai cache
     DB.set('siswa', siswaList);
@@ -1081,6 +1090,12 @@ if(data.nilai) {
 
     lastSyncTime = new Date();
     setSyncStatus('ok');
+    
+    // Refresh tampilan dashboard dengan data yang sudah bersih
+    if (document.getElementById('page-dashboard').classList.contains('active')) {
+      renderDashboard();
+    }
+    
     return true;
   } catch(err) {
     console.warn('Pull gagal:', err);
