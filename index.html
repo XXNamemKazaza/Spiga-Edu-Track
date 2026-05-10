@@ -493,8 +493,6 @@
   </div>
 </div>
 
-
-
 <script>
 // ========== THEME LAYER ==========
 let currentTheme = localStorage.getItem('edutrack_theme') || 'system';
@@ -558,12 +556,13 @@ function init() {
   // PERBAIKAN: Gunakan waktu lokal perangkat
   const d = new Date();
   const today = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-  
+
   document.getElementById('globalDate').value = today;
   document.getElementById('absenDate').value = today;
   rebuildKelasOptions();
   renderDashboard();
 
+  // Pull data dari Google Sheet saat pertama buka
   pullFromCloud().then(success => {
     if(success) {
       rebuildKelasOptions();
@@ -1056,7 +1055,7 @@ function setSyncStatus(state) {
   document.head.appendChild(style);
 })();
 
-  // PULL — ambil data dari Google Sheet
+// PULL — ambil data dari Google Sheet
 async function pullFromCloud() {
   if(!navigator.onLine) { setSyncStatus('offline'); return false; }
   setSyncStatus('syncing');
@@ -1108,65 +1107,6 @@ async function pullFromCloud() {
   }
 }
 
-    // Simpan data yang sudah sama persis dengan cloud ke memori perangkat
-    DB.set('siswa', siswaList);
-    DB.set('absensi', absensiData);
-    DB.set('nilai', nilaiData);
-
-    lastSyncTime = new Date();
-    setSyncStatus('ok');
-    
-    // Auto-refresh tampilan halaman yang sedang dibuka agar perubahannya langsung kelihatan
-    if (document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
-    if (document.getElementById('page-siswa').classList.contains('active')) renderKelolaSiswa();
-    if (document.getElementById('page-daftar').classList.contains('active')) renderDaftar();
-    if (document.getElementById('page-analitik').classList.contains('active')) renderAnalitik();
-    
-    return true;
-  } catch(err) {
-    console.warn('Pull gagal:', err);
-    setSyncStatus('error');
-    return false;
-  }
-}
-    
-    // PERBAIKAN CARA KEBAL: Paksa ambil tanggal murni dari ID, acuhkan format Google
-    if(data.absensi && Object.keys(data.absensi).length > 0) {
-      Object.entries(data.absensi).forEach(([key, a]) => {
-        // Karena key bentuknya "sw_xx_2026-05-10", 10 huruf terakhirnya pasti tanggal!
-        if(key && key.length >= 10) {
-          a.tanggal = key.slice(-10); 
-        }
-      });
-      Object.assign(absensiData, data.absensi);
-    }
-    
-    if(data.nilai && Object.keys(data.nilai).length > 0) {
-      Object.values(data.nilai).forEach(n => {
-        if(n.tanggal) n.tanggal = String(n.tanggal).replace(/'/g, '').split('T')[0];
-      });
-      Object.assign(nilaiData, data.nilai);
-    }
-
-    DB.set('siswa', siswaList);
-    DB.set('absensi', absensiData);
-    DB.set('nilai', nilaiData);
-
-    lastSyncTime = new Date();
-    setSyncStatus('ok');
-    
-    if (document.getElementById('page-dashboard').classList.contains('active')) {
-      renderDashboard();
-    }
-    
-    return true;
-  } catch(err) {
-    console.warn('Pull gagal:', err);
-    setSyncStatus('error');
-    return false;
-  }
-}
-  
 // PUSH — kirim semua data ke Google Sheet
 async function pushToCloud() {
   if(!navigator.onLine) { setSyncStatus('offline'); return false; }
