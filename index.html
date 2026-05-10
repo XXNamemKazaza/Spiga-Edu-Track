@@ -1063,21 +1063,16 @@ async function pullFromCloud() {
     const data = await res.json();
     if(!data.success) throw new Error(data.error || 'Gagal');
 
-    // Merge: cloud wins, tapi jangan hapus data lokal yang lebih baru
-    if(Array.isArray(data.siswa) && data.siswa.length > 0) {
-      // Tambah siswa dari cloud yang belum ada lokal
-      data.siswa.forEach(cs => {
-        const exists = siswaList.find(ls => ls.id === cs.id);
-        if(!exists) siswaList.push(cs);
-        else Object.assign(exists, cs); // update jika ada perubahan
-      });
-    }
-    if(data.absensi && Object.keys(data.absensi).length > 0) {
-      Object.assign(absensiData, data.absensi);
-    }
-    if(data.nilai && Object.keys(data.nilai).length > 0) {
-      Object.assign(nilaiData, data.nilai);
-    }
+    // Cloud adalah sumber kebenaran — replace langsung
+if(Array.isArray(data.siswa)) {
+  siswaList = data.siswa;
+}
+if(data.absensi) {
+  absensiData = data.absensi;
+}
+if(data.nilai) {
+  nilaiData = data.nilai;
+}
 
     // Simpan ke localStorage juga sebagai cache
     DB.set('siswa', siswaList);
