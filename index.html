@@ -555,13 +555,15 @@ function init() {
   document.getElementById('themeLabel').innerText = 'Tema: ' + initialLabel;
   applyTheme(currentTheme);
 
-  const today = new Date().toISOString().split('T')[0];
+  // PERBAIKAN: Gunakan waktu lokal perangkat
+  const d = new Date();
+  const today = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  
   document.getElementById('globalDate').value = today;
   document.getElementById('absenDate').value = today;
   rebuildKelasOptions();
   renderDashboard();
 
-  // Pull data dari Google Sheet saat pertama buka
   pullFromCloud().then(success => {
     if(success) {
       rebuildKelasOptions();
@@ -1063,27 +1065,32 @@ async function pullFromCloud() {
     const data = await res.json();
     if(!data.success) throw new Error(data.error || 'Gagal');
 
-    // Merge: cloud wins, tapi jangan hapus data lokal yang lebih baru
-    if(Array.isArray(data.siswa)) {
-      siswaList = data.siswa;
+    if(Array.isArray(data.siswa) && data.siswa.length > 0) {
+      data.siswa.forEach(cs => {
+        const exists = siswaList.find(ls => ls.id === cs.id);
+        if(!exists) siswaList.push(cs);
+        else Object.assign(exists, cs); 
+      });
     }
     
-    // PERBAIKAN: Bersihkan tanda petik / format aneh dari tanggal
+    // PERBAIKAN CARA KEBAL: Paksa ambil tanggal murni dari ID, acuhkan format Google
     if(data.absensi && Object.keys(data.absensi).length > 0) {
-      Object.values(data.absensi).forEach(a => {
-        if(a.tanggal) a.tanggal = String(a.tanggal).replace(/'/g, '').split('T')[0];
+      Object.entries(data.absensi).forEach(([key, a]) => {
+        // Karena key bentuknya "sw_xx_2026-05-10", 10 huruf terakhirnya pasti tanggal!
+        if(key && key.length >= 10) {
+          a.tanggal = key.slice(-10); 
+        }
       });
-      absensiData = data.absensi;
+      Object.assign(absensiData, data.absensi);
     }
     
     if(data.nilai && Object.keys(data.nilai).length > 0) {
       Object.values(data.nilai).forEach(n => {
         if(n.tanggal) n.tanggal = String(n.tanggal).replace(/'/g, '').split('T')[0];
       });
-      nilaiData = data.nilai;
+      Object.assign(nilaiData, data.nilai);
     }
 
-    // Simpan ke localStorage juga sebagai cache
     DB.set('siswa', siswaList);
     DB.set('absensi', absensiData);
     DB.set('nilai', nilaiData);
@@ -1091,7 +1098,6 @@ async function pullFromCloud() {
     lastSyncTime = new Date();
     setSyncStatus('ok');
     
-    // Refresh tampilan dashboard dengan data yang sudah bersih
     if (document.getElementById('page-dashboard').classList.contains('active')) {
       renderDashboard();
     }
@@ -1103,7 +1109,7 @@ async function pullFromCloud() {
     return false;
   }
 }
-
+  
 // PUSH — kirim semua data ke Google Sheet
 async function pushToCloud() {
   if(!navigator.onLine) { setSyncStatus('offline'); return false; }
