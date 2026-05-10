@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPIGA EduTrack — Sistem Absensi & Nilai Siswa</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root {
+    --primary: #2563eb;
+    --primary-light: #eff6ff;
+    --primary-dark: #1e40af;
+    --success: #16a34a;
+    --success-light: #f0fdf4;
+    --warning: #d97706;
+    --warning-light: #fffbeb;
+    --danger: #dc2626;
+    --danger-light: #fef2f2;
+    --purple: #7c3aed;
+    --purple-light: #f5f3ff;
+    
+    /* Base Grays (Light Mode) */
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+    
+    /* Semantic Colors */
+    --bg-main: var(--gray-50);
+    --bg-card: #ffffff;
+    --text-main: var(--gray-800);
+    --text-muted: var(--gray-500);
+    --border-color: var(--gray-200);
+
+    --radius: 10px;
+    --radius-lg: 14px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+    --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  [data-theme="dark"] {
+    --primary: #3b82f6;
+    --primary-light: rgba(59, 130, 246, 0.15);
+    --success-light: rgba(22, 163, 74, 0.15);
+    --warning-light: rgba(217, 119, 6, 0.15);
+    --danger-light: rgba(220, 38, 38, 0.15);
+    --purple-light: rgba(124, 58, 237, 0.15);
+
+    --gray-50: #111827;
+    --gray-100: #1f2937;
+    --gray-200: #374151;
+    --gray-300: #4b5563;
+    --gray-400: #6b7280;
+    --gray-500: #9ca3af;
+    --gray-600: #d1d5db;
+    --gray-700: #e5e7eb;
+    --gray-800: #f3f4f6;
+    --gray-900: #f9fafb;
+
+    --bg-main: #111827;
+    --bg-card: #1f2937;
+    --text-main: #f3f4f6;
+    --text-muted: #9ca3af;
+    --border-color: #374151;
+    
+    --shadow: 0 1px 3px rgba(0,0,0,0.3);
+    --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-main); color: var(--text-main); min-height: 100vh; transition: background-color 0.3s ease, color 0.3s ease; }
+
+  /* LAYOUT */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar { width: 240px; background: var(--bg-card); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; transition: transform .3s, background-color 0.3s ease, border-color 0.3s ease; }
+  .sidebar-logo { padding: 20px 20px 16px; border-bottom: 1px solid var(--border-color); }
+  .sidebar-logo h1 { font-size: 18px; font-weight: 700; color: var(--primary); }
+  .sidebar-logo p { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+  .sidebar-nav { flex: 1; padding: 12px 10px; overflow-y: auto; }
+  .nav-section { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--gray-400); padding: 8px 10px 4px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; cursor: pointer; font-size: 13.5px; color: var(--gray-600); transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); margin-bottom: 2px; }
+  .nav-item:hover { background: var(--gray-50); color: var(--text-main); transform: translateX(4px); }
+  .nav-item.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+  .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; transition: transform 0.3s ease; }
+  .nav-item:hover svg { transform: scale(1.1); }
+  
+  .main { margin-left: 240px; flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
+  .topbar { background: var(--bg-card); border-bottom: 1px solid var(--border-color); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; transition: background-color 0.3s ease, border-color 0.3s ease; }
+  .topbar-title { font-size: 26px; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; text-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: color 0.3s ease; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .content { padding: 24px; flex: 1; }
+
+  /* FILTER BAR */
+  .filter-bar { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; box-shadow: var(--shadow); transition: all 0.3s ease; }
+  .filter-bar label { font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+  select, input[type="text"], input[type="number"], input[type="date"], textarea {
+    border: 1px solid var(--border-color); border-radius: 8px; padding: 7px 10px; font-size: 13px; color: var(--text-main); background: var(--bg-card); outline: none; transition: all 0.25s ease;
+  }
+  select:focus, input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.15); transform: translateY(-1px); }
+  
+  /* BUTTONS & ANIMATIONS */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); white-space: nowrap; position: relative; overflow: hidden; }
+  .btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+  .btn:active { transform: translateY(0); box-shadow: var(--shadow); }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-success { background: var(--success); color: white; }
+  .btn-success:hover { background: #15803d; }
+  .btn-warning { background: var(--warning); color: white; }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-outline { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); }
+  .btn-outline:hover { background: var(--gray-50); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn svg { width: 15px; height: 15px; transition: transform 0.3s ease; }
+  .btn:hover svg { transform: scale(1.1) rotate(5deg); }
+
+  /* CARDS */
+  .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow); transition: all 0.3s ease; }
+  .card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .card-title { font-size: 14px; font-weight: 600; color: var(--text-main); }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px; transition: all 0.3s ease; box-shadow: var(--shadow); }
+  .stat-card:hover { transform: translateY(-3px) scale(1.02); box-shadow: var(--shadow-hover); }
+  .stat-label { font-size: 11px; color: var(--gray-400); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+  .stat-value { font-size: 26px; font-weight: 700; color: var(--text-main); margin-top: 6px; }
+  .stat-sub { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+  .stat-card.blue { border-left: 4px solid var(--primary); }
+  .stat-card.green { border-left: 4px solid var(--success); }
+  .stat-card.amber { border-left: 4px solid var(--warning); }
+  .stat-card.purple { border-left: 4px solid var(--purple); }
+  .stat-card.red { border-left: 4px solid var(--danger); }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; border-radius: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: var(--gray-50); color: var(--text-muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); white-space: nowrap; transition: background-color 0.3s ease; }
+  td { padding: 12px; border-bottom: 1px solid var(--gray-100); color: var(--text-main); vertical-align: middle; transition: background-color 0.2s ease; }
+  tr:last-child td { border-bottom: none; }
+  tr { transition: transform 0.2s ease, background-color 0.2s ease; }
+  tr:hover td { background: var(--gray-50); }
+  
+  .badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; transition: transform 0.2s ease; }
+  .badge:hover { transform: scale(1.05); }
+  .badge-success { background: var(--success-light); color: var(--success); }
+  .badge-warning { background: var(--warning-light); color: var(--warning); }
+  .badge-danger { background: var(--danger-light); color: var(--danger); }
+  .badge-primary { background: var(--primary-light); color: var(--primary); }
+  .badge-purple { background: var(--purple-light); color: var(--purple); }
+
+  /* ABSENSI PAGE */
+  .absen-grid { display: grid; gap: 8px; }
+  .absen-row { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 12px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 10px 14px; transition: all 0.25s ease; box-shadow: var(--shadow); }
+  .absen-row:hover { transform: scale(1.01) translateX(2px); border-color: var(--primary); box-shadow: var(--shadow-hover); }
+  .absen-num { font-size: 13px; font-weight: 700; color: var(--gray-400); text-align: center; }
+  .absen-name { font-size: 13.5px; font-weight: 600; color: var(--text-main); }
+  .absen-class { font-size: 11px; color: var(--text-muted); }
+  .absen-status { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .status-btn { padding: 5px 12px; border-radius: 20px; border: 2px solid transparent; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .2s cubic-bezier(0.4, 0, 0.2, 1); background: var(--gray-100); color: var(--text-muted); }
+  .status-btn:hover { transform: translateY(-2px); }
+  .status-btn.active-H { background: var(--success-light); color: var(--success); border-color: var(--success); transform: scale(1.05); }
+  .status-btn.active-I { background: var(--primary-light); color: var(--primary); border-color: var(--primary); transform: scale(1.05); }
+  .status-btn.active-S { background: var(--warning-light); color: var(--warning); border-color: var(--warning); transform: scale(1.05); }
+  .status-btn.active-A { background: var(--danger-light); color: var(--danger); border-color: var(--danger); transform: scale(1.05); }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); backdrop-filter: blur(4px); z-index: 200; align-items: center; justify-content: center; padding: 16px; opacity: 0; transition: opacity 0.3s ease; }
+  .modal-overlay.open { display: flex; opacity: 1; }
+  .modal { background: var(--bg-card); border-radius: var(--radius-lg); width: 100%; max-width: 640px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,.25); transform: scale(0.95) translateY(20px); opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+  .modal-overlay.open .modal { transform: scale(1) translateY(0); opacity: 1; }
+  .modal-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+  .modal-title { font-size: 18px; font-weight: 700; color: var(--text-main); }
+  .modal-body { padding: 20px 24px; }
+  .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px; }
+  .form-group { margin-bottom: 14px; }
+  .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; }
+  .form-input { width: 100%; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* CHARTS & TABS */
+  .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .chart-wrap { position: relative; height: 220px; }
+  .tabs { display: flex; gap: 4px; background: var(--gray-100); border-radius: var(--radius); padding: 4px; margin-bottom: 16px; }
+  .tab { flex: 1; text-align: center; padding: 7px 12px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--text-muted); transition: all .25s ease; }
+  .tab:hover { color: var(--text-main); }
+  .tab.active { background: var(--bg-card); color: var(--primary); box-shadow: var(--shadow); transform: scale(1.02); }
+
+  /* PAGE TRANSITIONS */
+  .page { display: none; opacity: 0; transform: translateY(15px); }
+  .page.active { display: block; animation: smoothSlideUp 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards; }
+  @keyframes smoothSlideUp { to { opacity: 1; transform: translateY(0); } }
+
+  .sort-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .sort-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-card); font-size: 12px; font-weight: 600; cursor: pointer; color: var(--text-muted); transition: all .2s ease; }
+  .sort-btn:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-1px); }
+  .sort-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 6px rgba(37,99,235,.2); }
+
+  /* MOBILE */
+  .hamburger { display: none; background: none; border: none; cursor: pointer; padding: 6px; color: var(--text-main); }
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; }
+    .hamburger { display: block; }
+    .form-row { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .absen-row { grid-template-columns: 32px 1fr; }
+    .absen-status { grid-column: 1 / -1; }
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 99; backdrop-filter: blur(2px); }
+    .overlay.open { display: block; }
+  }
+
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--gray-400); animation: smoothSlideUp 0.5s ease forwards; }
+  .empty-state svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: .4; transition: transform 0.3s ease; }
+  .empty-state:hover svg { transform: scale(1.1) rotate(5deg); }
+
+  .tip-box { background: var(--primary-light); border-left: 4px solid var(--primary); border-radius: 0 var(--radius) var(--radius) 0; padding: 14px; font-size: 13px; color: var(--text-main); margin-top: 12px; transition: all 0.3s ease; box-shadow: var(--shadow); }
+  .tip-box:hover { transform: translateX(4px); }
+  .scroll-table { max-height: 480px; overflow-y: auto; }
+</style>
+</head>
+<body>
+<div class="overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <h1>📚 SPIGA EduTrack</h1>
+      <p>Sistem Absensi & Nilai Siswa Spiga</p>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Menu Utama</div>
+      <div class="nav-item active" onclick="showPage('dashboard')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item" onclick="showPage('absensi')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+        Absensi & Poin
+      </div>
+      <div class="nav-item" onclick="showPage('nilai')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        Input Nilai
+      </div>
+      <div class="nav-item" onclick="showPage('daftar')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Daftar Siswa
+      </div>
+      <div class="nav-item" onclick="showPage('analitik')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Analitik & Grafik
+      </div>
+      <div class="nav-section" style="margin-top:12px">Pengaturan</div>
+      <div class="nav-item" onclick="showPage('siswa')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Kelola Siswa
+      </div>
+      <div class="nav-item" onclick="openExportModal()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        Export PDF / CSV
+      </div>
+
+      <div class="nav-section" style="margin-top:12px">Tampilan</div>
+      <div class="nav-item" onclick="toggleTheme()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        <span id="themeLabel">Tema: System</span>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="hamburger" onclick="toggleSidebar()">
+          <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <span class="topbar-title" id="pageTitle">Dashboard</span>
+      </div>
+      <div class="topbar-right">
+        <div id="syncStatus" style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--text-muted);transition:all 0.3s ease">
+          <span id="syncDot" style="width:7px;height:7px;border-radius:50%;background:#9ca3af;display:inline-block;transition:background 0.3s"></span>
+          <span id="syncText">Menghubungkan...</span>
+        </div>
+        <select id="globalKelas" onchange="onKelasChange()" style="min-width:120px">
+          <option value="">Semua Kelas</option>
+        </select>
+        <input type="date" id="globalDate" style="font-size:13px;padding:7px 10px" />
+        <button class="btn btn-primary btn-sm" onclick="saveToday()">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          Simpan
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="page active" id="page-dashboard">
+        <div class="filter-bar" style="margin-bottom:16px">
+          <label>Tampilkan:</label>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="sort-btn active" id="df_all" onclick="setDashFilter('all',this)">Semua Kelas</button>
+            <button class="sort-btn" id="df_7" onclick="setDashFilter('7',this)">Kelas 7</button>
+            <button class="sort-btn" id="df_8" onclick="setDashFilter('8',this)">Kelas 8</button>
+            <button class="sort-btn" id="df_9" onclick="setDashFilter('9',this)">Kelas 9</button>
+          </div>
+          <div style="width:1px;background:var(--border-color);height:24px;margin:0 4px"></div>
+          <label>Kelas spesifik:</label>
+          <select id="dashKelasSpesifik" onchange="setDashFilterSpesifik(this.value)" style="min-width:120px">
+            <option value="">— pilih kelas —</option>
+          </select>
+          <span id="dashFilterLabel" style="font-size:12px;color:var(--text-muted);margin-left:4px"></span>
+        </div>
+        <div class="stats-grid" id="dashStats"></div>
+        <div class="charts-grid">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Kehadiran per Kelas</span></div>
+            <div class="chart-wrap"><canvas id="chartKehadiran"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Distribusi Nilai Rata-rata</span></div>
+            <div class="chart-wrap"><canvas id="chartNilai"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Top 5 Poin Keaktifan</span></div>
+            <div class="chart-wrap"><canvas id="chartPoin"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Tren Kehadiran (30 hari)</span></div>
+            <div class="chart-wrap"><canvas id="chartTren"></canvas></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Perhatian Khusus 🔴</span><span class="badge badge-danger" id="badgePerhatian">0 siswa</span></div>
+          <div id="tablePerhatian"></div>
+        </div>
+      </div>
+
+      <div class="page" id="page-absensi">
+        <div class="filter-bar">
+          <label>Kelas:</label>
+          <select id="absenKelas" onchange="renderAbsensi()">
+            <option value="">Semua</option>
+          </select>
+          <label>Tanggal:</label>
+          <input type="date" id="absenDate" onchange="renderAbsensi()" />
+          <input type="text" placeholder="Cari siswa..." id="absenSearch" oninput="renderAbsensi()" style="flex:1;min-width:160px" />
+          <button class="btn btn-outline btn-sm" onclick="setAllStatus('H')">Tandai Semua Hadir</button>
+        </div>
+        <div style="margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="font-size:13px;color:var(--text-muted)">Poin cepat:</span>
+          <button class="btn btn-outline btn-sm" onclick="quickPoint(1)">+1 Poin</button>
+          <button class="btn btn-outline btn-sm" onclick="quickPoint(2)">+2 Poin</button>
+          <button class="btn btn-outline btn-sm" onclick="quickPoint(5)">+5 Poin</button>
+          <button class="btn btn-outline btn-sm" onclick="quickPoint(-1)">-1 Poin</button>
+          <span style="font-size:11px;color:var(--gray-400)">(untuk yang status H)</span>
+        </div>
+        <div class="absen-grid" id="absenGrid"></div>
+      </div>
+
+      <div class="page" id="page-nilai">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab('manual')">Input Manual</div>
+          <div class="tab" onclick="switchTab('paste')">Paste dari Excel</div>
+          <div class="tab" onclick="switchTab('lihat')">Lihat Semua Nilai</div>
+        </div>
+        <div id="tab-manual">
+          <div class="filter-bar">
+            <label>Kelas:</label>
+            <select id="nilaiKelas" onchange="renderNilaiTable()"><option value="">Pilih Kelas</option></select>
+            <label>Jenis:</label>
+            <select id="nilaiJenis"><option value="ulangan_harian">Ulangan Harian</option><option value="latihan_soal">Latihan Soal</option></select>
+            <label>Nama/Sesi:</label>
+            <input type="text" id="nilaiSesi" placeholder="cth: UH1, Latihan Bab 2" style="width:160px" />
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Tabel Input Nilai</span><button class="btn btn-primary btn-sm" onclick="simpanNilai()">💾 Simpan Nilai</button></div>
+            <div class="table-wrap scroll-table" id="nilaiTableWrap"><div class="empty-state"><p>Pilih kelas untuk mulai input nilai</p></div></div>
+          </div>
+        </div>
+        <div id="tab-paste" style="display:none">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Paste dari Excel / Google Sheets</span></div>
+            <div class="modal-body" style="padding:0">
+              <div class="form-group"><label class="form-label">Kelas Tujuan</label><select id="pasteKelas" class="form-input"><option value="">Pilih Kelas</option></select></div>
+              <div class="form-group"><label class="form-label">Jenis Nilai</label><select id="pasteJenis" class="form-input"><option value="ulangan_harian">Ulangan Harian</option><option value="latihan_soal">Latihan Soal</option></select></div>
+              <div class="form-group"><label class="form-label">Nama Sesi (UH1, Latihan Bab 3, dst)</label><input type="text" id="pasteSesi" class="form-input" placeholder="UH1" /></div>
+              <div class="form-group"><label class="form-label">Paste Data dari Excel</label><p style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Format kolom: <strong>NIS | Nama | Nilai</strong> (pisahkan dengan tab, 1 baris = 1 siswa)</p><textarea id="paste-area" style="width:100%;height:120px;font-family:monospace;padding:10px" placeholder="001&#9;Ahmad Rizki&#9;85"></textarea></div>
+              <button class="btn btn-primary" onclick="parsePaste()" style="margin-bottom:16px">🔍 Preview & Validasi</button>
+              <div id="paste-preview"></div>
+              <div id="paste-actions" style="display:none;margin-top:12px"><button class="btn btn-success" onclick="importPaste()">✅ Import Nilai</button></div>
+            </div>
+          </div>
+        </div>
+        <div id="tab-lihat" style="display:none">
+          <div class="filter-bar">
+            <label>Kelas:</label><select id="lihatKelas" onchange="renderLihatNilai()"><option value="">Semua</option></select>
+            <label>Jenis:</label><select id="lihatJenis" onchange="renderLihatNilai()"><option value="">Semua</option><option value="ulangan_harian">Ulangan Harian</option><option value="latihan_soal">Latihan Soal</option></select>
+            <label>Sort:</label><select id="lihatSort" onchange="renderLihatNilai()"><option value="nama">Nama A-Z</option><option value="nilai_desc">Nilai Tertinggi</option><option value="nilai_asc">Nilai Terendah</option><option value="rata_desc">Rata-rata Tertinggi</option></select>
+          </div>
+          <div class="card"><div class="table-wrap scroll-table" id="lihatNilaiWrap"></div></div>
+        </div>
+      </div>
+
+      <div class="page" id="page-daftar">
+        <div class="filter-bar">
+          <label>Kelas:</label><select id="daftarKelas" onchange="renderDaftar()"><option value="">Semua</option></select>
+          <input type="text" placeholder="Cari nama / NIS..." id="daftarSearch" oninput="renderDaftar()" style="flex:1;min-width:160px" />
+          <label>Sort:</label><select id="daftarSort" onchange="renderDaftar()"><option value="absen">No. Absen</option><option value="nama">Nama A-Z</option><option value="nilai_desc">Nilai Tertinggi</option><option value="nilai_asc">Nilai Terendah</option><option value="poin_desc">Poin Terbanyak</option><option value="kehadiran_desc">Kehadiran Terbaik</option></select>
+          <label>Filter:</label><select id="daftarFilter" onchange="renderDaftar()"><option value="">Semua Siswa</option><option value="nilai_tinggi">Nilai Tinggi (≥80)</option><option value="nilai_rendah">Nilai Rendah (&lt;65)</option><option value="poin_tinggi">Poin Banyak (≥10)</option><option value="absen_rendah">Kehadiran Rendah (&lt;80%)</option></select>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title" id="daftarCount">Daftar Siswa</span><button class="btn btn-outline btn-sm" onclick="openExportModal()">📄 Export PDF</button></div>
+          <div class="table-wrap scroll-table" id="daftarTable"></div>
+        </div>
+      </div>
+
+      <div class="page" id="page-analitik">
+        <div class="filter-bar"><label>Kelas:</label><select id="analitikKelas" onchange="renderAnalitik()"><option value="">Semua</option></select></div>
+        <div class="stats-grid" id="analitikStats"></div>
+        <div class="charts-grid">
+          <div class="card" style="grid-column: 1/-1">
+            <div class="card-header"><span class="card-title">Nilai Rata-rata Per Siswa</span>
+              <div class="sort-bar">
+                <button class="sort-btn active" onclick="sortAnalitik('rata_desc',this)">Tertinggi</button>
+                <button class="sort-btn" onclick="sortAnalitik('rata_asc',this)">Terendah</button>
+                <button class="sort-btn" onclick="sortAnalitik('nama',this)">Nama</button>
+              </div>
+            </div>
+            <div style="position:relative;height:260px"><canvas id="chartRata"></canvas></div>
+          </div>
+          <div class="card"><div class="card-header"><span class="card-title">Distribusi Nilai</span></div><div class="chart-wrap"><canvas id="chartDistrib"></canvas></div></div>
+          <div class="card"><div class="card-header"><span class="card-title">Keaktifan (Poin)</span></div><div class="chart-wrap"><canvas id="chartAktif"></canvas></div></div>
+        </div>
+        <div class="card"><div class="card-header"><span class="card-title">Klasifikasi Siswa</span></div><div id="klasifikasiTable"></div><div id="tipBox"></div></div>
+      </div>
+
+      <div class="page" id="page-siswa">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+          <div class="filter-bar" style="margin-bottom:0;flex:1"><label>Kelas:</label><select id="kelolaKelas" onchange="renderKelolaSiswa()"><option value="">Semua</option></select><input type="text" placeholder="Cari..." id="kelolaSearch" oninput="renderKelolaSiswa()" style="flex:1" /></div>
+          <div style="display:flex;gap:8px"><button class="btn btn-outline btn-sm" onclick="openBulkModal()">📋 Tambah Massal</button><button class="btn btn-primary btn-sm" onclick="openAddModal()">+ Tambah Siswa</button></div>
+        </div>
+        <div class="card"><div class="table-wrap scroll-table" id="kelolaSiswaTable"></div></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="modalAdd">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title" id="modalAddTitle">Tambah Siswa</span><button class="btn btn-outline btn-sm" onclick="closeModal('modalAdd')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row"><div class="form-group"><label class="form-label">NIS</label><input type="text" id="addNis" class="form-input" /></div><div class="form-group"><label class="form-label">No. Absen</label><input type="number" id="addNoAbsen" class="form-input" /></div></div>
+      <div class="form-group"><label class="form-label">Nama Lengkap</label><input type="text" id="addNama" class="form-input" /></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Kelas</label><select id="addKelas" class="form-input"><option value="7A">7A</option><option value="7B">7B</option><option value="8A">8A</option><option value="9A">9A</option></select></div><div class="form-group"><label class="form-label">Jenis Kelamin</label><select id="addJK" class="form-input"><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('modalAdd')">Batal</button><button class="btn btn-primary" onclick="saveSiswa()">Simpan</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalBulk">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Tambah Siswa Massal</span><button class="btn btn-outline btn-sm" onclick="closeModal('modalBulk')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Kelas Default</label><select id="bulkKelas" class="form-input"><option value="">— pilih —</option><option value="7A">7A</option><option value="8A">8A</option><option value="9A">9A</option></select></div>
+      <div class="form-group"><label class="form-label">Data Siswa (paste dari Excel)</label><textarea id="bulkData" style="width:100%;height:150px;font-family:monospace;padding:10px"></textarea></div>
+      <button class="btn btn-outline btn-sm" onclick="previewBulk()">🔍 Preview</button>
+      <div id="bulkPreview" style="margin-top:12px"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('modalBulk')">Batal</button><button class="btn btn-primary" onclick="saveBulk()">Import Semua</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalExport">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Export Laporan</span><button class="btn btn-outline btn-sm" onclick="closeModal('modalExport')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Kelas</label><select id="expKelas" class="form-input"><option value="">Semua Kelas</option></select></div>
+        <div class="form-group"><label class="form-label">Format</label><select id="expFormat" class="form-input"><option value="pdf">PDF Lengkap (dengan Cover & Grafik)</option><option value="csv">CSV (Excel)</option></select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Filter Siswa</label><select id="expFilter" class="form-input"><option value="">Semua Siswa</option><option value="nilai_tinggi">Nilai Tinggi (≥80)</option><option value="nilai_rendah">Nilai Rendah (&lt;65)</option><option value="poin_tinggi">Poin Banyak (≥10)</option><option value="absen_rendah">Kehadiran Rendah (&lt;80%)</option></select></div>
+      <div class="form-group"><label class="form-label">Sortir</label><select id="expSort" class="form-input"><option value="nama">Nama A-Z</option><option value="nilai_desc">Nilai Tertinggi</option><option value="poin_desc">Poin Terbanyak</option></select></div>
+      <div class="form-group"><label class="form-label">Judul Laporan</label><input type="text" id="expJudul" class="form-input" placeholder="Laporan Kelas 7A" /></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('modalExport')">Batal</button><button class="btn btn-success" onclick="doExport()">📄 Export Sekarang</button></div>
+  </div>
+</div>
+
+
+
+<script>
+// ========== THEME LAYER ==========
+let currentTheme = localStorage.getItem('edutrack_theme') || 'system';
+
+function applyTheme(theme) {
+  if (theme === 'system') {
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    Chart.defaults.color = isDark ? '#f3f4f6' : '#6b7280';
+  } else {
+    document.documentElement.setAttribute('data-theme', theme);
+    Chart.defaults.color = theme === 'dark' ? '#f3f4f6' : '#6b7280';
+  }
+  if(chartKehadiran) renderDashboard();
+  if(chartRata) renderAnalitik();
+}
+
+function toggleTheme() {
+  const themes = ['light', 'dark', 'system'];
+  let idx = themes.indexOf(currentTheme);
+  currentTheme = themes[(idx + 1) % 3];
+  localStorage.setItem('edutrack_theme', currentTheme);
+  
+  let label = currentTheme === 'system' ? 'System' : (currentTheme === 'dark' ? 'Dark Mode' : 'Light Mode');
+  document.getElementById('themeLabel').innerText = 'Tema: ' + label;
+  applyTheme(currentTheme);
+}
+
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  if (currentTheme === 'system') applyTheme('system');
+});
+
+// ========== DATA LAYER ==========
+const DB = {
+  get: (k) => { try { return JSON.parse(localStorage.getItem('edutrack_'+k)) || null; } catch(e){ return null; } },
+  set: (k,v) => localStorage.setItem('edutrack_'+k, JSON.stringify(v)),
+};
+let siswaList = DB.get('siswa') || [];
+let absensiData = DB.get('absensi') || {};
+let nilaiData = DB.get('nilai') || {};
+let editingSiswaId = null;
+let currentAnalitikSort = 'rata_desc';
+let chartKehadiran=null, chartNilai=null, chartPoin=null, chartTren=null, chartRata=null, chartDistrib2=null, chartAktif2=null;
+let bulkParsed = [], pasteParsed = [];
+let dashFilter = 'all';
+let syncImportData = null;
+
+function save() {
+  DB.set('siswa', siswaList);
+  DB.set('absensi', absensiData);
+  DB.set('nilai', nilaiData);
+  schedulePush(); // otomatis push ke Google Sheet
+}
+
+// ========== INIT ==========
+function init() {
+  let initialLabel = currentTheme === 'system' ? 'System' : (currentTheme === 'dark' ? 'Dark Mode' : 'Light Mode');
+  document.getElementById('themeLabel').innerText = 'Tema: ' + initialLabel;
+  applyTheme(currentTheme);
+
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('globalDate').value = today;
+  document.getElementById('absenDate').value = today;
+  rebuildKelasOptions();
+  renderDashboard();
+
+  // Pull data dari Google Sheet saat pertama buka
+  pullFromCloud().then(success => {
+    if(success) {
+      rebuildKelasOptions();
+      renderDashboard();
+      showToast('✅ Data berhasil dimuat dari cloud!');
+    }
+  });
+}
+
+function rebuildKelasOptions() {
+  const kelasList = [...new Set(siswaList.map(s => s.kelas))].sort();
+  const selects = ['globalKelas','absenKelas','nilaiKelas','lihatKelas','daftarKelas','analitikKelas','kelolaKelas','pasteKelas','expKelas','dashKelasSpesifik','addKelas','bulkKelas'];
+  selects.forEach(id => {
+    const el = document.getElementById(id);
+    if(!el) return;
+    const cur = el.value;
+    if(id === 'expKelas') el.innerHTML = '<option value="">Semua Kelas</option>';
+    else if(id === 'nilaiKelas' || id === 'pasteKelas') el.innerHTML = '<option value="">Pilih Kelas</option>';
+    else if(id === 'dashKelasSpesifik') el.innerHTML = '<option value="">— pilih kelas —</option>';
+    else if(id === 'addKelas' || id === 'bulkKelas') { el.innerHTML = '<option value="">— pilih —</option>'; }
+    else el.innerHTML = '<option value="">Semua</option>';
+    kelasList.forEach(k => {
+      const o = document.createElement('option');
+      o.value = k; o.textContent = 'Kelas ' + k;
+      el.appendChild(o);
+    });
+    if(cur && kelasList.includes(cur)) el.value = cur;
+  });
+}
+
+function onKelasChange() { renderAbsensi(); }
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  const map = {dashboard:'Dashboard',absensi:'Absensi & Poin',nilai:'Input Nilai',daftar:'Daftar Siswa',analitik:'Analitik & Grafik',siswa:'Kelola Siswa'};
+  document.getElementById('pageTitle').textContent = map[id] || id;
+  event && event.currentTarget && event.currentTarget.classList.add('active');
+  
+  if(id==='dashboard') renderDashboard();
+  if(id==='absensi') renderAbsensi();
+  if(id==='daftar') renderDaftar();
+  if(id==='analitik') renderAnalitik();
+  if(id==='siswa') renderKelolaSiswa();
+  closeSidebar();
+}
+
+// ========== HELPERS ==========
+function getFilteredSiswa(kelas='', filterType='') {
+  let list = siswaList.slice();
+  if(kelas) list = list.filter(s => s.kelas === kelas);
+  if(filterType === 'nilai_tinggi') list = list.filter(s => getRataValue(s.id) >= 80);
+  if(filterType === 'nilai_rendah') list = list.filter(s => { const r=getRataValue(s.id); return r > 0 && r < 65; });
+  if(filterType === 'poin_tinggi') list = list.filter(s => getTotalPoin(s.id) >= 10);
+  if(filterType === 'absen_rendah') list = list.filter(s => getKehadiranPct(s.id) < 80 && getKehadiranPct(s.id) > 0);
+  return list;
+}
+
+function getRataValue(sid) {
+  const semua = Object.values(nilaiData).filter(n => n.siswaId === sid);
+  if(!semua.length) return 0;
+  return Math.round(semua.reduce((a,b) => a+b.nilai, 0) / semua.length);
+}
+
+function getTotalPoin(sid) {
+  return Object.values(absensiData).filter(a => a.siswaId === sid).reduce((s,a) => s+(a.poin||0), 0);
+}
+
+function getKehadiranPct(sid) {
+  const recs = Object.values(absensiData).filter(a => a.siswaId === sid);
+  if(!recs.length) return 0;
+  const hadir = recs.filter(a => a.status === 'H').length;
+  return Math.round((hadir / recs.length) * 100);
+}
+
+function getAbsenCount(sid, type) {
+  return Object.values(absensiData).filter(a => a.siswaId === sid && a.status === type).length;
+}
+
+function hasNoNilai(sid) {
+  return Object.values(nilaiData).filter(n => n.siswaId === sid).length === 0;
+}
+
+function getKlasifikasi(pct, rata, poin) {
+  if(rata>=80 && pct>=90) return {label:'Berprestasi',badge:'badge-success'};
+  if(rata>=70 && pct>=80) return {label:'Baik',badge:'badge-primary'};
+  if(poin>=15) return {label:'Sangat Aktif',badge:'badge-purple'};
+  if(rata>0 && rata<65 || pct>0 && pct<75) return {label:'Perlu Perhatian',badge:'badge-danger'};
+  return {label:'Cukup',badge:'badge-warning'};
+}
+
+function sortList(list, sortType) {
+  const copy = list.slice();
+  if(sortType === 'nama') copy.sort((a,b) => a.nama.localeCompare(b.nama));
+  else if(sortType === 'nilai_desc') copy.sort((a,b) => getRataValue(b.id)-getRataValue(a.id));
+  else if(sortType === 'nilai_asc') copy.sort((a,b) => getRataValue(a.id)-getRataValue(b.id));
+  else if(sortType === 'rata_desc') copy.sort((a,b) => getRataValue(b.id)-getRataValue(a.id));
+  else if(sortType === 'rata_asc') copy.sort((a,b) => getRataValue(a.id)-getRataValue(b.id));
+  else if(sortType === 'poin_desc') copy.sort((a,b) => getTotalPoin(b.id)-getTotalPoin(a.id));
+  else if(sortType === 'kehadiran_desc') copy.sort((a,b) => getKehadiranPct(b.id)-getKehadiranPct(a.id));
+  else copy.sort((a,b) => (a.noAbsen||0)-(b.noAbsen||0));
+  return copy;
+}
+
+// ========== DASHBOARD FILTER ==========
+function setDashFilter(type, btn) {
+  dashFilter = type;
+  document.getElementById('dashKelasSpesifik').value = '';
+  document.querySelectorAll('#page-dashboard .sort-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const labels = {all:'Semua Kelas', '7':'Kelas 7', '8':'Kelas 8', '9':'Kelas 9'};
+  document.getElementById('dashFilterLabel').textContent = labels[type] || '';
+  renderDashboard();
+}
+
+function setDashFilterSpesifik(val) {
+  if(!val) return;
+  dashFilter = 'spesifik:'+val;
+  document.querySelectorAll('#page-dashboard .sort-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('dashFilterLabel').textContent = 'Kelas '+val+' saja';
+  renderDashboard();
+}
+
+function getDashSiswa() {
+  if(dashFilter === 'all') return siswaList;
+  if(dashFilter === '7') return siswaList.filter(s => s.kelas.startsWith('7'));
+  if(dashFilter === '8') return siswaList.filter(s => s.kelas.startsWith('8'));
+  if(dashFilter === '9') return siswaList.filter(s => s.kelas.startsWith('9'));
+  if(dashFilter.startsWith('spesifik:')) { const k=dashFilter.split(':')[1]; return siswaList.filter(s=>s.kelas===k); }
+  return siswaList;
+}
+
+// ========== DASHBOARD ==========
+function renderDashboard() {
+  const filteredSiswa = getDashSiswa();
+  const total = filteredSiswa.length;
+  const today = document.getElementById('globalDate').value;
+  
+  const absenToday = Object.values(absensiData).filter(a => filteredSiswa.some(s=>s.id===a.siswaId) && a.tanggal === today);
+  const hadir = absenToday.filter(a => a.status === 'H').length;
+  const sakitToday = absenToday.filter(a => a.status === 'S').length;
+  const izinToday = absenToday.filter(a => a.status === 'I').length;
+  const alphaToday = absenToday.filter(a => a.status === 'A').length;
+
+  const totalPoin = filteredSiswa.reduce((s,sw) => s+getTotalPoin(sw.id), 0);
+  const avgNilai = filteredSiswa.length ? Math.round(filteredSiswa.reduce((s,sw) => s+getRataValue(sw.id), 0)/filteredSiswa.length) : 0;
+
+  document.getElementById('dashStats').innerHTML = `
+    <div class="stat-card blue"><div class="stat-label">Total Siswa</div><div class="stat-value">${total}</div><div class="stat-sub">${[...new Set(filteredSiswa.map(s=>s.kelas))].length} kelas</div></div>
+    <div class="stat-card green">
+      <div class="stat-label">Hadir Hari Ini</div>
+      <div class="stat-value">${hadir}</div>
+      <div style="margin-top:6px;display:flex;gap:4px">
+        <span class="badge badge-warning" style="font-size:9px;padding:2px 6px" title="Sakit">S: ${sakitToday}</span>
+        <span class="badge badge-primary" style="font-size:9px;padding:2px 6px" title="Izin">I: ${izinToday}</span>
+        <span class="badge badge-danger" style="font-size:9px;padding:2px 6px" title="Alpha">A: ${alphaToday}</span>
+      </div>
+    </div>
+    <div class="stat-card amber"><div class="stat-label">Rata-rata Nilai</div><div class="stat-value">${avgNilai}</div><div class="stat-sub">seluruh siswa</div></div>
+    <div class="stat-card purple"><div class="stat-label">Total Poin Aktif</div><div class="stat-value">${totalPoin}</div><div class="stat-sub">keseluruhan</div></div>
+  `;
+
+  Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+
+  const kelasList = [...new Set(filteredSiswa.map(s=>s.kelas))].sort();
+  const pctPerKelas = kelasList.map(k => {
+    const siswaK = filteredSiswa.filter(s => s.kelas===k);
+    const recs = Object.values(absensiData).filter(a => siswaK.some(s=>s.id===a.siswaId));
+    return recs.length ? Math.round(recs.filter(a=>a.status==='H').length / recs.length * 100) : 0;
+  });
+
+  if(chartKehadiran) chartKehadiran.destroy();
+  chartKehadiran = new Chart(document.getElementById('chartKehadiran'), {
+    type:'bar', data:{labels:kelasList, datasets:[{label:'% Kehadiran',data:pctPerKelas,backgroundColor:'#3b82f6',borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{max:100,ticks:{callback:v=>v+'%'}}}}
+  });
+
+  const nilaiDist = [0,0,0,0,0];
+  filteredSiswa.forEach(s => { const v=getRataValue(s.id); if(v){ if(v<60)nilaiDist[0]++; else if(v<70)nilaiDist[1]++; else if(v<80)nilaiDist[2]++; else if(v<90)nilaiDist[3]++; else nilaiDist[4]++; }});
+  if(chartNilai) chartNilai.destroy();
+  chartNilai = new Chart(document.getElementById('chartNilai'), {
+    type:'doughnut', data:{labels:['<60','60-69','70-79','80-89','90+'],datasets:[{data:nilaiDist,backgroundColor:['#ef4444','#f59734','#eab308','#22c55e','#3b82f6'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false}
+  });
+
+  const top5 = sortList(filteredSiswa, 'poin_desc').slice(0,5);
+  if(chartPoin) chartPoin.destroy();
+  chartPoin = new Chart(document.getElementById('chartPoin'), {
+    type:'bar', data:{labels:top5.map(s=>s.nama), datasets:[{label:'Poin',data:top5.map(s=>getTotalPoin(s.id)),backgroundColor:'#7c3aed',borderRadius:6}]},
+    options:{
+      indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales: { y: { ticks: { callback: function(val) { return this.getLabelForValue(val).split(' ')[0]; } } } }
+    }
+  });
+
+  const days=[], pcts=[];
+  for(let i=13;i>=0;i--) { const d=new Date(); d.setDate(d.getDate()-i); const ds=d.toISOString().split('T')[0]; days.push(ds.slice(5)); const a=Object.values(absensiData).filter(x=>x.tanggal===ds && filteredSiswa.some(s=>s.id===x.siswaId)); pcts.push(a.length ? Math.round(a.filter(x=>x.status==='H').length/a.length*100) : null); }
+  if(chartTren) chartTren.destroy();
+  chartTren = new Chart(document.getElementById('chartTren'), {
+    type:'line', data:{labels:days, datasets:[{label:'% Hadir',data:pcts,borderColor:'#3b82f6',backgroundColor:'rgba(59, 130, 246, 0.1)',fill:true,tension:.4,spanGaps:true,pointRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{max:100,ticks:{callback:v=>v+'%'}}}}
+  });
+
+  // Perhatian Khusus - NEW LOGIC
+  const perhatianArr = [];
+  filteredSiswa.forEach(s => {
+    const alphaCount = getAbsenCount(s.id, 'A');
+    const sakitCount = getAbsenCount(s.id, 'S');
+    const rata = getRataValue(s.id);
+    const poin = getTotalPoin(s.id);
+    const noNilai = hasNoNilai(s.id);
+    
+    let alasan = [];
+    if (alphaCount > 3) alasan.push(`Alpha (${alphaCount}x)`);
+    if (sakitCount > 3) alasan.push(`Sakit (${sakitCount}x)`);
+    if (rata > 0 && rata < 65) alasan.push(`Rata-rata Kecil (${rata})`);
+    if (poin < 5) alasan.push(`Poin Kecil (${poin})`);
+    if (noNilai) alasan.push('Belum Menerima Nilai');
+
+    if (alphaCount > 3 || sakitCount > 3 || (rata > 0 && rata < 65) || poin < 5 || noNilai) {
+      perhatianArr.push({ s, alasan: alasan.join(', ') });
+    }
+  });
+
+  document.getElementById('badgePerhatian').textContent = perhatianArr.length + ' siswa';
+  document.getElementById('tablePerhatian').innerHTML = perhatianArr.length ? `<div class="table-wrap"><table><thead><tr><th>Nama</th><th>Kelas</th><th>Keterangan Sistem</th></tr></thead><tbody>${perhatianArr.map(p=>`<tr><td><strong>${p.s.nama}</strong></td><td>${p.s.kelas}</td><td><span style="color:var(--danger);font-size:12px;font-weight:600">${p.alasan}</span></td></tr>`).join('')}</tbody></table></div>` : `<div class="empty-state" style="padding:20px"><p>Semua siswa dalam kondisi baik 🎉</p></div>`;
+}
+
+// ========== ABSENSI, NILAI, DAFTAR, ANALITIK, KELOLA ==========
+function getAbsenKey(siswaId, tanggal) { return siswaId+'_'+tanggal; }
+function renderAbsensi() {
+  const kelas = document.getElementById('absenKelas').value || document.getElementById('globalKelas').value;
+  const tgl = document.getElementById('absenDate').value || document.getElementById('globalDate').value;
+  const search = document.getElementById('absenSearch').value.toLowerCase();
+  let list = siswaList.filter(s => { if(kelas && s.kelas !== kelas) return false; if(search && !s.nama.toLowerCase().includes(search) && !s.nis.includes(search)) return false; return true; }).sort((a,b)=>(a.noAbsen||0)-(b.noAbsen||0));
+  if(!list.length) { document.getElementById('absenGrid').innerHTML = `<div class="empty-state"><p>Tidak ada siswa ditemukan</p></div>`; return; }
+  document.getElementById('absenGrid').innerHTML = list.map(s => {
+    const key = getAbsenKey(s.id, tgl); const rec = absensiData[key] || {}; const status = rec.status || ''; const poin = rec.poin || 0;
+    return `<div class="absen-row">
+      <div class="absen-num">${s.noAbsen||'-'}</div><div><div class="absen-name">${s.nama}</div><div class="absen-class">${s.kelas} · ${s.nis}</div></div>
+      <div class="absen-status">
+        ${['H','I','S','A'].map(st=>`<button class="status-btn ${status===st?'active-'+st:''}" onclick="setStatus('${s.id}','${tgl}','${st}')">${st==='H'?'Hadir':st==='I'?'Izin':st==='S'?'Sakit':'Alpha'}</button>`).join('')}
+        <div style="display:flex;align-items:center;gap:4px;margin-left:6px"><span style="font-size:11px;color:var(--text-muted)">Poin:</span><input type="number" value="${poin}" onchange="setPoin('${s.id}','${tgl}',this.value)" min="0" step="1" style="width:50px;padding:4px;text-align:center" /></div>
+      </div></div>`;
+  }).join('');
+}
+function setStatus(sid, tgl, status) { const key = getAbsenKey(sid, tgl); if(!absensiData[key]) absensiData[key] = {siswaId:sid, tanggal:tgl, status:'', poin:0}; absensiData[key].status = status; save(); renderAbsensi(); }
+function setPoin(sid, tgl, val) { const key = getAbsenKey(sid, tgl); if(!absensiData[key]) absensiData[key] = {siswaId:sid, tanggal:tgl, status:'', poin:0}; absensiData[key].poin = parseInt(val)||0; save(); }
+function setAllStatus(status) { const kelas = document.getElementById('absenKelas').value; const tgl = document.getElementById('absenDate').value || document.getElementById('globalDate').value; siswaList.filter(s => !kelas || s.kelas===kelas).forEach(s => { const key = getAbsenKey(s.id, tgl); if(!absensiData[key]) absensiData[key] = {siswaId:s.id, tanggal:tgl, status:'', poin:0}; absensiData[key].status = status; }); save(); renderAbsensi(); }
+function quickPoint(pt) { const kelas = document.getElementById('absenKelas').value; const tgl = document.getElementById('absenDate').value || document.getElementById('globalDate').value; siswaList.filter(s => !kelas || s.kelas===kelas).forEach(s => { const key = getAbsenKey(s.id, tgl); const rec = absensiData[key]; if(rec && rec.status === 'H') { rec.poin = Math.max(0, (rec.poin||0)+pt); } }); save(); renderAbsensi(); }
+function saveToday() { save(); showToast('Data tersimpan!'); renderDashboard(); }
+
+function switchTab(tab) { ['manual','paste','lihat'].forEach(t => { document.getElementById('tab-'+t).style.display = t===tab?'':'none'; }); document.querySelectorAll('#page-nilai .tab').forEach((el,i) => { el.classList.toggle('active', ['manual','paste','lihat'][i]===tab); }); if(tab==='lihat') renderLihatNilai(); }
+function renderNilaiTable() { const kelas = document.getElementById('nilaiKelas').value; if(!kelas) { document.getElementById('nilaiTableWrap').innerHTML = '<div class="empty-state"><p>Pilih kelas terlebih dahulu</p></div>'; return; } const list = siswaList.filter(s=>s.kelas===kelas).sort((a,b)=>(a.noAbsen||0)-(b.noAbsen||0)); document.getElementById('nilaiTableWrap').innerHTML = `<table><thead><tr><th>No</th><th>NIS</th><th>Nama</th><th>Nilai (0-100)</th></tr></thead><tbody>${list.map(s=>`<tr><td>${s.noAbsen||'-'}</td><td>${s.nis}</td><td>${s.nama}</td><td><input type="number" id="nv_${s.id}" min="0" max="100" placeholder="—" style="width:70px;text-align:center" /></td></tr>`).join('')}</tbody></table>`; }
+function simpanNilai() { const kelas = document.getElementById('nilaiKelas').value; const jenis = document.getElementById('nilaiJenis').value; const sesi = document.getElementById('nilaiSesi').value.trim() || ('Sesi_'+Date.now()); if(!kelas) return alert('Pilih kelas dulu!'); let count=0; siswaList.filter(s=>s.kelas===kelas).forEach(s => { const el = document.getElementById('nv_'+s.id); if(!el || el.value==='') return; const key = s.id+'_'+jenis+'_'+sesi.replace(/\s+/g,'_'); nilaiData[key] = {siswaId:s.id, jenis, sesi, nilai:parseFloat(el.value), kelas, tanggal:new Date().toISOString().split('T')[0]}; count++; }); save(); showToast(count+' nilai berhasil disimpan!'); }
+function parsePaste() { const raw = document.getElementById('paste-area').value.trim(); const kelas = document.getElementById('pasteKelas').value; if(!kelas) return alert('Pilih kelas dulu!'); const lines = raw.split('\n').filter(l=>l.trim()); pasteParsed = []; const errors = []; lines.forEach((line, i) => { const cols = line.split(/\t|,/).map(c=>c.trim()); if(cols.length < 2) { errors.push(`Baris ${i+1}: format salah`); return; } let nis, nama, nilai; if(cols.length >= 3) { nis=cols[0]; nama=cols[1]; nilai=parseFloat(cols[2]); } else { nama=cols[0]; nilai=parseFloat(cols[1]); } const found = siswaList.find(s => s.kelas===kelas && (s.nis===nis || s.nama.toLowerCase()===nama.toLowerCase())); if(!found) { errors.push(`Baris ${i+1}: siswa tidak ditemukan`); return; } if(isNaN(nilai)) { errors.push(`Baris ${i+1}: nilai tidak valid`); return; } pasteParsed.push({siswa:found, nilai}); }); let html = ''; if(pasteParsed.length) html += `<div class="badge badge-success" style="margin-bottom:8px">${pasteParsed.length} data valid ✓</div>`; if(errors.length) html += `<div style="margin-top:10px">${errors.map(e=>`<div class="badge badge-danger" style="margin-bottom:4px;display:block">${e}</div>`).join('')}</div>`; document.getElementById('paste-preview').innerHTML = html; document.getElementById('paste-actions').style.display = pasteParsed.length ? 'block' : 'none'; }
+function importPaste() { const jenis = document.getElementById('pasteJenis').value; const sesi = document.getElementById('pasteSesi').value.trim() || 'Import'; const kelas = document.getElementById('pasteKelas').value; pasteParsed.forEach(p => { const key = p.siswa.id+'_'+jenis+'_'+sesi.replace(/\s+/g,'_'); nilaiData[key] = {siswaId:p.siswa.id, jenis, sesi, nilai:p.nilai, kelas, tanggal:new Date().toISOString().split('T')[0]}; }); save(); showToast(pasteParsed.length+' nilai diimport!'); pasteParsed=[]; document.getElementById('paste-preview').innerHTML=''; document.getElementById('paste-actions').style.display='none'; document.getElementById('paste-area').value=''; }
+function renderLihatNilai() { const kelas = document.getElementById('lihatKelas').value; const jenis = document.getElementById('lihatJenis').value; const sortType = document.getElementById('lihatSort').value; let list = getFilteredSiswa(kelas); list = sortList(list, sortType); const allNilai = Object.values(nilaiData).filter(n => (!kelas||n.kelas===kelas) && (!jenis||n.jenis===jenis)); const sesiSet = [...new Set(allNilai.map(n=>n.jenis+'|'+n.sesi))].sort(); if(!list.length) { document.getElementById('lihatNilaiWrap').innerHTML='<div class="empty-state"><p>Belum ada data</p></div>'; return; } const cols = sesiSet.map(s => { const [j,nm]=s.split('|'); return {key:s, jenis:j, nama:nm}; }); document.getElementById('lihatNilaiWrap').innerHTML = `<table><thead><tr><th>No</th><th>Nama</th><th>Kelas</th>${cols.map(c=>`<th title="${c.jenis}">${c.nama}</th>`).join('')}<th>Rata-rata</th></tr></thead><tbody>${list.map(s=>{ const vals = cols.map(c => { const [j,nm]=c.key.split('|'); const k=s.id+'_'+j+'_'+nm.replace(/\s+/g,'_'); return nilaiData[k] ? nilaiData[k].nilai : null; }); const filled = vals.filter(v=>v!==null); const rata = filled.length ? Math.round(filled.reduce((a,b)=>a+b,0)/filled.length) : 0; const rataBadge = rata>=80?'badge-success':rata>=65?'badge-warning':'badge-danger'; return `<tr><td>${s.noAbsen||'-'}</td><td>${s.nama}</td><td>${s.kelas}</td>${vals.map(v=>`<td>${v!==null?v:'—'}</td>`).join('')}<td><span class="badge ${rataBadge}">${rata||'—'}</span></td></tr>`; }).join('')}</tbody></table>`; }
+
+function renderDaftar() { const kelas = document.getElementById('daftarKelas').value; const search = document.getElementById('daftarSearch').value.toLowerCase(); const sortType = document.getElementById('daftarSort').value; const filterType = document.getElementById('daftarFilter').value; let list = getFilteredSiswa(kelas, filterType); if(search) list = list.filter(s => s.nama.toLowerCase().includes(search)||s.nis.includes(search)); list = sortList(list, sortType); document.getElementById('daftarCount').textContent = `Daftar Siswa (${list.length})`; if(!list.length) { document.getElementById('daftarTable').innerHTML='<div class="empty-state"><p>Tidak ada siswa</p></div>'; return; } document.getElementById('daftarTable').innerHTML = `<table><thead><tr><th>No</th><th>NIS</th><th>Nama</th><th>Kelas</th><th>JK</th><th>Kehadiran</th><th>Rata Nilai</th><th>Poin</th><th>Klasifikasi</th></tr></thead><tbody>${list.map((s,i)=>{ const pct=getKehadiranPct(s.id); const rata=getRataValue(s.id); const poin=getTotalPoin(s.id); const kls = getKlasifikasi(pct,rata,poin); return `<tr><td>${i+1}</td><td>${s.nis}</td><td><strong>${s.nama}</strong></td><td>${s.kelas}</td><td>${s.jk||'-'}</td><td>${pct?pct+'%':'—'}</td><td>${rata||'—'}</td><td>${poin}</td><td><span class="badge ${kls.badge}">${kls.label}</span></td></tr>`; }).join('')}</tbody></table>`; }
+
+function renderAnalitik() {
+  const kelas = document.getElementById('analitikKelas').value;
+  let list = getFilteredSiswa(kelas);
+  if(!list.length) { document.getElementById('analitikStats').innerHTML='<div class="empty-state"><p>Belum ada siswa</p></div>'; return; }
+  const rataArr = list.map(s=>getRataValue(s.id)).filter(v=>v>0);
+  const avgNilai = rataArr.length ? Math.round(rataArr.reduce((a,b)=>a+b,0)/rataArr.length) : 0;
+  const maxNilai = rataArr.length ? Math.max(...rataArr) : 0;
+  const totalPoin = list.reduce((s,sw)=>s+getTotalPoin(sw.id),0);
+  const avgKehadiran = list.length ? Math.round(list.reduce((s,sw)=>s+getKehadiranPct(sw.id),0)/list.length) : 0;
+  document.getElementById('analitikStats').innerHTML = `<div class="stat-card blue"><div class="stat-label">Rata-rata Nilai</div><div class="stat-value">${avgNilai}</div></div><div class="stat-card green"><div class="stat-label">Nilai Tertinggi</div><div class="stat-value">${maxNilai}</div></div><div class="stat-card amber"><div class="stat-label">Rata Kehadiran</div><div class="stat-value">${avgKehadiran}%</div></div><div class="stat-card purple"><div class="stat-label">Total Poin</div><div class="stat-value">${totalPoin}</div></div>`;
+  
+  let listSortRata = sortList(list, currentAnalitikSort).slice(0,20);
+  if(chartRata) chartRata.destroy();
+  chartRata = new Chart(document.getElementById('chartRata'), { 
+    type:'bar', data:{labels:listSortRata.map(s=>s.nama),datasets:[{label:'Rata-rata',data:listSortRata.map(s=>getRataValue(s.id)),backgroundColor:'#3b82f6',borderRadius:6}]}, 
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}, scales: { x: { ticks: { callback: function(val) { return this.getLabelForValue(val).split(' ')[0]; } } } }} 
+  });
+  
+  const dist=[0,0,0,0,0]; list.forEach(s=>{const v=getRataValue(s.id);if(v){if(v<60)dist[0]++;else if(v<70)dist[1]++;else if(v<80)dist[2]++;else if(v<90)dist[3]++;else dist[4]++;}});
+  if(chartDistrib2) chartDistrib2.destroy(); chartDistrib2 = new Chart(document.getElementById('chartDistrib'), { type:'bar', data:{labels:['<60','60-69','70-79','80-89','90+'],datasets:[{data:dist,backgroundColor:['#ef4444','#f59734','#eab308','#22c55e','#3b82f6'],borderRadius:6}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}} });
+  
+  const top10 = sortList(list,'poin_desc').slice(0,10);
+  if(chartAktif2) chartAktif2.destroy(); 
+  chartAktif2 = new Chart(document.getElementById('chartAktif'), { 
+    type:'bar', data:{labels:top10.map(s=>s.nama),datasets:[{label:'Poin',data:top10.map(s=>getTotalPoin(s.id)),backgroundColor:'#7c3aed',borderRadius:6}]}, 
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}, scales: { x: { ticks: { callback: function(val) { return this.getLabelForValue(val).split(' ')[0]; } } } }} 
+  });
+  
+  const klsGroups = {}; list.forEach(s => { const k = getKlasifikasi(getKehadiranPct(s.id), getRataValue(s.id), getTotalPoin(s.id)); if(!klsGroups[k.label]) klsGroups[k.label] = []; klsGroups[k.label].push(s.nama); });
+  document.getElementById('klasifikasiTable').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Klasifikasi</th><th>Jumlah</th><th>Nama Siswa</th></tr></thead><tbody>${Object.entries(klsGroups).map(([k,v])=>`<tr><td><span class="badge badge-primary">${k}</span></td><td>${v.length}</td><td style="font-size:12px">${v.join(', ')}</td></tr>`).join('')}</tbody></table></div>`;
+}
+function sortAnalitik(type, btn) { currentAnalitikSort = type; document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderAnalitik(); }
+
+function renderKelolaSiswa() { const kelas = document.getElementById('kelolaKelas').value; const search = document.getElementById('kelolaSearch').value.toLowerCase(); let list = siswaList.filter(s => { if(kelas && s.kelas!==kelas) return false; if(search && !s.nama.toLowerCase().includes(search) && !s.nis.includes(search)) return false; return true; }).sort((a,b)=>(a.kelas+a.noAbsen).localeCompare(b.kelas+String(b.noAbsen||0).padStart(3,'0'))); if(!list.length) { document.getElementById('kelolaSiswaTable').innerHTML='<div class="empty-state"><p>Belum ada siswa.</p></div>'; return; } document.getElementById('kelolaSiswaTable').innerHTML = `<table><thead><tr><th>No</th><th>NIS</th><th>Nama</th><th>Kelas</th><th>Aksi</th></tr></thead><tbody>${list.map((s,i)=>`<tr><td>${s.noAbsen||'-'}</td><td>${s.nis}</td><td>${s.nama}</td><td>${s.kelas}</td><td><button class="btn btn-outline btn-sm" onclick="editSiswa('${s.id}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteSiswa('${s.id}')">Hapus</button></td></tr>`).join('')}</tbody></table>`; }
+function openAddModal() { editingSiswaId = null; document.getElementById('modalAddTitle').textContent = 'Tambah Siswa'; ['addNis','addNama','addNoAbsen'].forEach(id=>document.getElementById(id).value=''); document.getElementById('modalAdd').classList.add('open'); }
+function editSiswa(id) { const s = siswaList.find(x=>x.id===id); if(!s) return; editingSiswaId = id; document.getElementById('modalAddTitle').textContent = 'Edit Siswa'; document.getElementById('addNis').value = s.nis; document.getElementById('addNama').value = s.nama; document.getElementById('addNoAbsen').value = s.noAbsen||''; document.getElementById('addKelas').value = s.kelas; document.getElementById('addJK').value = s.jk||'L'; document.getElementById('modalAdd').classList.add('open'); }
+function saveSiswa() { const nis = document.getElementById('addNis').value.trim(); const nama = document.getElementById('addNama').value.trim(); const noAbsen = parseInt(document.getElementById('addNoAbsen').value)||0; const kelas = document.getElementById('addKelas').value; const jk = document.getElementById('addJK').value; if(!nama || !nis) return alert('Nama dan NIS wajib diisi!'); if(editingSiswaId) { const idx = siswaList.findIndex(s=>s.id===editingSiswaId); if(idx>=0) siswaList[idx] = {...siswaList[idx], nis, nama, noAbsen, kelas, jk}; } else { siswaList.push({id:'sw_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), nis, nama, noAbsen, kelas, jk}); } save(); rebuildKelasOptions(); closeModal('modalAdd'); renderKelolaSiswa(); showToast('Siswa disimpan!'); }
+function deleteSiswa(id) { if(!confirm('Hapus siswa ini?')) return; siswaList = siswaList.filter(s=>s.id!==id); Object.keys(absensiData).forEach(k=>{ if(absensiData[k].siswaId===id) delete absensiData[k]; }); Object.keys(nilaiData).forEach(k=>{ if(nilaiData[k].siswaId===id) delete nilaiData[k]; }); save(); rebuildKelasOptions(); renderKelolaSiswa(); }
+function openBulkModal() { document.getElementById('bulkData').value=''; document.getElementById('bulkPreview').innerHTML=''; document.getElementById('modalBulk').classList.add('open'); }
+function previewBulk() { const raw = document.getElementById('bulkData').value.trim(); const defKelas = document.getElementById('bulkKelas').value; const lines = raw.split('\n').filter(l=>l.trim()); bulkParsed = []; const errors = []; lines.forEach((line, i) => { const cols = line.split(/\t|,/).map(c=>c.trim()); if(cols.length < 2) return; let noAbsen, nis, nama, kelas, jk; if(cols.length >= 5) { [noAbsen,nis,nama,kelas,jk]=cols; } else if(cols.length === 4) { [noAbsen,nis,nama,kelas]=cols; } else if(cols.length === 3) { [noAbsen,nis,nama]=cols; kelas=defKelas; } else { [noAbsen,nama]=cols; kelas=defKelas; } if(!kelas) return; bulkParsed.push({noAbsen:parseInt(noAbsen)||i+1, nis:nis||'NIS_'+Date.now()+i, nama:nama||'?', kelas, jk:jk||'L'}); }); let html = ''; if(bulkParsed.length) html += `<div class="badge badge-success" style="margin-bottom:8px">${bulkParsed.length} siswa siap diimport</div>`; document.getElementById('bulkPreview').innerHTML = html; }
+function saveBulk() { if(!bulkParsed.length) { previewBulk(); if(!bulkParsed.length) return; } bulkParsed.forEach(b => { siswaList.push({id:'sw_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), ...b}); }); save(); rebuildKelasOptions(); closeModal('modalBulk'); renderKelolaSiswa(); showToast(bulkParsed.length+' siswa berhasil ditambah!'); bulkParsed=[]; }
+
+// ========== EXPORT PDF DENGAN GRAFIK & BAB ==========
+function openExportModal() {
+  rebuildKelasOptions();
+  document.getElementById('expJudul').value = 'Laporan Data Siswa';
+  document.getElementById('modalExport').classList.add('open');
+}
+
+async function doExport() {
+  const kelas = document.getElementById('expKelas').value;
+  const filterType = document.getElementById('expFilter').value;
+  const sortType = document.getElementById('expSort').value;
+  const format = document.getElementById('expFormat').value;
+  const judul = document.getElementById('expJudul').value || 'Laporan Siswa';
+  let list = getFilteredSiswa(kelas, filterType);
+  list = sortList(list, sortType);
+
+  if(format === 'csv') {
+    const header = ['No','NIS','Nama','Kelas','Kehadiran%','Rata Nilai','Total Poin'];
+    const rows = list.map((s,i) => [i+1, s.nis, s.nama, s.kelas, getKehadiranPct(s.id)+'%', getRataValue(s.id)||0, getTotalPoin(s.id)]);
+    const csv = [header, ...rows].map(r=>r.join(',')).join('\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv], {type:'text/csv'})); a.download = judul+'.csv'; a.click();
+    showToast('CSV berhasil diexport!'); closeModal('modalExport'); return;
+  }
+  
+  await exportPDF(list, judul, kelas);
+}
+
+// Fungsi bantu untuk memaksakan warna gelap pada teks grafik ketika diexport
+function createTempChart(config) {
+  return new Promise(resolve => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 600; canvas.height = 300;
+    document.body.appendChild(canvas);
+    canvas.style.display = 'none';
+    
+    // Matikan animasi dan set background putih agar label gelap terbaca
+    config.options = config.options || {};
+    config.options.animation = false;
+    config.options.responsive = false;
+    
+    // Paksa semua warna default ChartJS menjadi gelap agar PDF terbaca sempurna
+    const prevColor = Chart.defaults.color;
+    Chart.defaults.color = '#374151'; 
+
+    config.plugins = [{
+      id: 'custom_canvas_background_color',
+      beforeDraw: (chart) => {
+        const ctx = chart.canvas.getContext('2d');
+        ctx.save(); ctx.globalCompositeOperation = 'destination-over'; ctx.fillStyle = 'white'; ctx.fillRect(0, 0, chart.width, chart.height); ctx.restore();
+      }
+    }];
+
+    const chart = new Chart(canvas, config);
+    setTimeout(() => {
+      const img = canvas.toDataURL('image/png');
+      chart.destroy(); 
+      canvas.remove(); 
+      Chart.defaults.color = prevColor; // Kembalikan ke warna default tema pengguna
+      resolve(img);
+    }, 100);
+  });
+}
+
+async function exportPDF(list, judul, kelas) {
+  showToast('Sedang membuat PDF, mohon tunggu sebentar...');
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const pw = doc.internal.pageSize.getWidth();
+  const ph = doc.internal.pageSize.getHeight();
+
+  // --- COVER PAGE ---
+  doc.setFillColor(37, 99, 235);
+  doc.rect(0, 0, pw, 10, 'F'); 
+  doc.rect(0, ph - 10, pw, 10, 'F'); 
+
+  doc.setFontSize(26);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(31, 41, 55);
+  doc.text(judul.toUpperCase(), pw/2, ph/2 - 20, {align: 'center'});
+  
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(107, 114, 128);
+  doc.text(`Kelas: ${kelas || 'Semua Kelas (Berdasarkan Filter)'}`, pw/2, ph/2, {align: 'center'});
+  
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(37, 99, 235);
+  doc.text('SMP PGRI 3 DENPASAR', pw/2, ph/2 + 20, {align: 'center'});
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(107, 114, 128);
+  doc.text('Tahun Ajaran 2025/2026', pw/2, ph/2 + 28, {align: 'center'});
+
+  // --- BAB 1: DAFTAR DATA SISWA ---
+  doc.addPage();
+  doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.setTextColor(31, 41, 55);
+  doc.text('BAB I: Tabel Data Kehadiran, Nilai & Poin', 14, 20);
+  
+  const tableData = list.map((s,i) => {
+    return [i+1, s.nis, s.nama, s.kelas, getKehadiranPct(s.id)+'%', getRataValue(s.id)||'-', getTotalPoin(s.id)];
+  });
+  
+  doc.autoTable({
+    startY: 28,
+    head: [['No', 'NIS', 'Nama Siswa', 'Kelas', 'Kehadiran', 'Rata Nilai', 'Total Poin']],
+    body: tableData,
+    styles: { fontSize: 9, cellPadding: 3 },
+    headStyles: { fillColor: [37, 99, 235], textColor: 255 },
+    alternateRowStyles: { fillColor: [245, 247, 255] }
+  });
+
+  // --- BAB 2: VISUALISASI DATA (GRAFIK) ---
+  doc.addPage();
+  doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.setTextColor(31, 41, 55);
+  doc.text('BAB II: Visualisasi Data Statistik', 14, 20);
+
+  // 1. Chart Distribusi Nilai
+  const dist=[0,0,0,0,0]; 
+  list.forEach(s=>{const v=getRataValue(s.id);if(v){if(v<60)dist[0]++;else if(v<70)dist[1]++;else if(v<80)dist[2]++;else if(v<90)dist[3]++;else dist[4]++;}});
+  const imgNilai = await createTempChart({
+    type:'doughnut', 
+    data:{labels:['<60','60-69','70-79','80-89','90+'], datasets:[{data:dist, backgroundColor:['#ef4444','#f59734','#eab308','#22c55e','#3b82f6']}]}
+  });
+  doc.setFontSize(12); doc.text('1. Distribusi Rata-Rata Nilai', 14, 32);
+  doc.addImage(imgNilai, 'PNG', 14, 38, 80, 40);
+
+  // 2. Chart Kehadiran
+  const hadirMaks = list.filter(s => getKehadiranPct(s.id) >= 80).length;
+  const kurangHadir = list.length - hadirMaks;
+  const imgHadir = await createTempChart({
+    type:'pie',
+    data:{labels:['>= 80% (Aman)', '< 80% (Perlu Perhatian)'], datasets:[{data:[hadirMaks, kurangHadir], backgroundColor:['#22c55e', '#ef4444']}]}
+  });
+  doc.text('2. Proporsi Kehadiran (Target Minimum 80%)', 105, 32);
+  doc.addImage(imgHadir, 'PNG', 105, 38, 80, 40);
+
+  // 3. Chart Top Poin (Bar)
+  const topList = sortList(list, 'poin_desc').slice(0, 8);
+  const imgPoin = await createTempChart({
+    type:'bar',
+    data:{labels:topList.map(s=>s.nama), datasets:[{label:'Total Poin Aktif', data:topList.map(s=>getTotalPoin(s.id)), backgroundColor:'#7c3aed'}]},
+    options: {
+        scales: { x: { ticks: { callback: function(val) { return this.getLabelForValue(val).split(' ')[0]; } } } }
+    }
+  });
+  doc.text('3. Siswa Teraktif Berdasarkan Poin', 14, 90);
+  doc.addImage(imgPoin, 'PNG', 14, 96, 170, 70);
+
+  doc.save(judul.replace(/\s+/g,'_')+'.pdf');
+  showToast('Laporan PDF berhasil di-download!');
+  closeModal('modalExport');
+}
+
+// ========== GOOGLE APPS SCRIPT ONLINE SYNC ==========
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbybxjbRypZA-IAOll70N244FUJoJa4lfNnjAu05KSyqDIwhs4W6YkRx0MRI1DG1L7wRlA/exec';
+let isSyncing = false;
+let lastSyncTime = null;
+let syncRetryTimer = null;
+
+function setSyncStatus(state) {
+  const dot  = document.getElementById('syncDot');
+  const text = document.getElementById('syncText');
+  const box  = document.getElementById('syncStatus');
+  if(!dot || !text) return;
+  const states = {
+    connecting : { color:'#9ca3af', bg:'var(--gray-100)', txt:'Menghubungkan...' },
+    syncing    : { color:'#f59e0b', bg:'#fffbeb',         txt:'Menyinkronkan...' },
+    ok         : { color:'#16a34a', bg:'#f0fdf4',         txt:'Tersinkron ✓'   },
+    error      : { color:'#dc2626', bg:'#fef2f2',         txt:'Gagal Sinkron ✗' },
+    offline    : { color:'#9ca3af', bg:'var(--gray-100)', txt:'Offline'         },
+  };
+  const s = states[state] || states.connecting;
+  dot.style.background = s.color;
+  text.textContent = s.txt;
+  box.style.background = s.bg;
+  box.style.color = s.color;
+  if(state === 'syncing') dot.style.animation = 'pulse 1s infinite';
+  else dot.style.animation = '';
+}
+
+// Tambahkan animasi pulse ke CSS
+(function() {
+  const style = document.createElement('style');
+  style.textContent = `@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }`;
+  document.head.appendChild(style);
+})();
+
+// PULL — ambil data dari Google Sheet
+async function pullFromCloud() {
+  if(!navigator.onLine) { setSyncStatus('offline'); return false; }
+  setSyncStatus('syncing');
+  try {
+    const res = await fetch(GAS_URL + '?t=' + Date.now(), { method:'GET' });
+    const data = await res.json();
+    if(!data.success) throw new Error(data.error || 'Gagal');
+
+    // Merge: cloud wins, tapi jangan hapus data lokal yang lebih baru
+    if(Array.isArray(data.siswa) && data.siswa.length > 0) {
+      // Tambah siswa dari cloud yang belum ada lokal
+      data.siswa.forEach(cs => {
+        const exists = siswaList.find(ls => ls.id === cs.id);
+        if(!exists) siswaList.push(cs);
+        else Object.assign(exists, cs); // update jika ada perubahan
+      });
+    }
+    if(data.absensi && Object.keys(data.absensi).length > 0) {
+      Object.assign(absensiData, data.absensi);
+    }
+    if(data.nilai && Object.keys(data.nilai).length > 0) {
+      Object.assign(nilaiData, data.nilai);
+    }
+
+    // Simpan ke localStorage juga sebagai cache
+    DB.set('siswa', siswaList);
+    DB.set('absensi', absensiData);
+    DB.set('nilai', nilaiData);
+
+    lastSyncTime = new Date();
+    setSyncStatus('ok');
+    return true;
+  } catch(err) {
+    console.warn('Pull gagal:', err);
+    setSyncStatus('error');
+    return false;
+  }
+}
+
+// PUSH — kirim semua data ke Google Sheet
+async function pushToCloud() {
+  if(!navigator.onLine) { setSyncStatus('offline'); return false; }
+  if(isSyncing) return false;
+  isSyncing = true;
+  setSyncStatus('syncing');
+  try {
+    const payload = JSON.stringify({
+      action  : 'save_all',
+      siswa   : siswaList,
+      absensi : absensiData,
+      nilai   : nilaiData,
+    });
+    const res = await fetch(GAS_URL, {
+      method : 'POST',
+      body   : payload,
+    });
+    const data = await res.json();
+    if(!data.success) throw new Error(data.error || 'Gagal');
+    lastSyncTime = new Date();
+    setSyncStatus('ok');
+    isSyncing = false;
+    return true;
+  } catch(err) {
+    console.warn('Push gagal:', err);
+    setSyncStatus('error');
+    isSyncing = false;
+    // Retry otomatis 10 detik lagi
+    clearTimeout(syncRetryTimer);
+    syncRetryTimer = setTimeout(() => pushToCloud(), 10000);
+    return false;
+  }
+}
+
+// Debounced push — tunggu 2 detik setelah perubahan terakhir baru push
+let pushDebounceTimer;
+function schedulePush() {
+  clearTimeout(pushDebounceTimer);
+  setSyncStatus('syncing');
+  pushDebounceTimer = setTimeout(() => pushToCloud(), 2000);
+}
+
+// Auto-pull tiap 60 detik
+setInterval(() => { if(!isSyncing) pullFromCloud(); }, 60000);
+
+// Listen koneksi internet
+window.addEventListener('online',  () => { setSyncStatus('connecting'); pullFromCloud(); });
+window.addEventListener('offline', () => setSyncStatus('offline'));
+
+
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebarOverlay').classList.toggle('open'); }
+function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('open'); }
+
+let toastTimer;
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if(!t) { t=document.createElement('div'); t.id='toast'; t.style.cssText='position:fixed;bottom:24px;right:24px;background:var(--primary);color:white;padding:12px 20px;border-radius:12px;font-size:13px;font-weight:600;z-index:999;transition:all .4s cubic-bezier(0.175, 0.885, 0.32, 1.275);box-shadow:0 10px 15px -3px rgba(0,0,0,0.3);transform:translateY(20px);opacity:0'; document.body.appendChild(t); }
+  t.textContent=msg; t.style.transform='translateY(0)'; t.style.opacity='1';
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>{t.style.transform='translateY(20px)';t.style.opacity='0';}, 3000);
+}
+
+init();
+</script>
+</body>
+</html>
