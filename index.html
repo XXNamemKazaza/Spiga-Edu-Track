@@ -1065,13 +1065,48 @@ async function pullFromCloud() {
     const data = await res.json();
     if(!data.success) throw new Error(data.error || 'Gagal');
 
-    if(Array.isArray(data.siswa) && data.siswa.length > 0) {
-      data.siswa.forEach(cs => {
-        const exists = siswaList.find(ls => ls.id === cs.id);
-        if(!exists) siswaList.push(cs);
-        else Object.assign(exists, cs); 
-      });
+    // PERBAIKAN: Cloud adalah penguasa mutlak (Overwrite / Timpa Total)
+    if(data.siswa !== undefined) {
+      siswaList = data.siswa;
     }
+    
+    if(data.absensi !== undefined) {
+      Object.entries(data.absensi).forEach(([key, a]) => {
+        // Pembersih format tanggal otomatis
+        if(key && key.length >= 10) a.tanggal = key.slice(-10); 
+      });
+      absensiData = data.absensi; 
+    }
+    
+    if(data.nilai !== undefined) {
+      Object.values(data.nilai).forEach(n => {
+        // Pembersih format tanggal otomatis
+        if(n.tanggal) n.tanggal = String(n.tanggal).replace(/'/g, '').split('T')[0];
+      });
+      nilaiData = data.nilai; 
+    }
+
+    // Simpan data yang sudah sama persis dengan cloud ke memori perangkat
+    DB.set('siswa', siswaList);
+    DB.set('absensi', absensiData);
+    DB.set('nilai', nilaiData);
+
+    lastSyncTime = new Date();
+    setSyncStatus('ok');
+    
+    // Auto-refresh tampilan halaman yang sedang dibuka agar perubahannya langsung kelihatan
+    if (document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
+    if (document.getElementById('page-siswa').classList.contains('active')) renderKelolaSiswa();
+    if (document.getElementById('page-daftar').classList.contains('active')) renderDaftar();
+    if (document.getElementById('page-analitik').classList.contains('active')) renderAnalitik();
+    
+    return true;
+  } catch(err) {
+    console.warn('Pull gagal:', err);
+    setSyncStatus('error');
+    return false;
+  }
+}
     
     // PERBAIKAN CARA KEBAL: Paksa ambil tanggal murni dari ID, acuhkan format Google
     if(data.absensi && Object.keys(data.absensi).length > 0) {
