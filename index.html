@@ -1056,7 +1056,7 @@ function setSyncStatus(state) {
   document.head.appendChild(style);
 })();
 
-// PULL — ambil data dari Google Sheet
+  // PULL — ambil data dari Google Sheet
 async function pullFromCloud() {
   if(!navigator.onLine) { setSyncStatus('offline'); return false; }
   setSyncStatus('syncing');
@@ -1085,6 +1085,28 @@ async function pullFromCloud() {
       });
       nilaiData = data.nilai; 
     }
+
+    // Simpan data yang sudah sama persis dengan cloud ke memori perangkat
+    DB.set('siswa', siswaList);
+    DB.set('absensi', absensiData);
+    DB.set('nilai', nilaiData);
+
+    lastSyncTime = new Date();
+    setSyncStatus('ok');
+    
+    // Auto-refresh tampilan halaman yang sedang dibuka agar perubahannya langsung kelihatan
+    if (document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
+    if (document.getElementById('page-siswa').classList.contains('active')) renderKelolaSiswa();
+    if (document.getElementById('page-daftar').classList.contains('active')) renderDaftar();
+    if (document.getElementById('page-analitik').classList.contains('active')) renderAnalitik();
+    
+    return true;
+  } catch(err) {
+    console.warn('Pull gagal:', err);
+    setSyncStatus('error');
+    return false;
+  }
+}
 
     // Simpan data yang sudah sama persis dengan cloud ke memori perangkat
     DB.set('siswa', siswaList);
