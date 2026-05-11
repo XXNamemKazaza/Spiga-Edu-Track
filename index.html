@@ -121,11 +121,19 @@
   /* FILTER BAR */
   .filter-bar { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; box-shadow: var(--shadow); transition: all 0.3s ease; }
   .filter-bar label { font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+  
+  /* Input Global Styles - Dihilangkan width:100% agar Desktop aman */
   select, input[type="text"], input[type="number"], input[type="date"], input[type="password"], textarea {
-    border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 12px; font-size: 13px; color: var(--text-main); background: var(--bg-card); outline: none; transition: all 0.25s ease; width: 100%;
+    border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 12px; font-size: 13px; color: var(--text-main); background: var(--bg-card); outline: none; transition: all 0.25s ease;
   }
   select:focus, input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.15); transform: translateY(-1px); }
+  .form-input { width: 100%; }
   
+  /* Filter Bar Inputs */
+  .filter-bar select, .filter-bar input[type="text"], .filter-bar input[type="date"] {
+    flex: 1; min-width: 120px;
+  }
+
   /* BUTTONS & ANIMATIONS */
   .btn { display: inline-flex; justify-content: center; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); white-space: nowrap; position: relative; overflow: hidden; }
   .btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
@@ -214,7 +222,7 @@
   .sort-btn.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 6px rgba(37,99,235,.2); }
 
   /* ==================================================
-     MOBILE OPTIMIZATIONS (100% RESPONSIVE)
+     MOBILE OPTIMIZATIONS (100% RESPONSIVE & ANTI-NABRAK)
      ================================================== */
   .hamburger { display: none; background: none; border: none; cursor: pointer; padding: 6px; color: var(--text-main); }
   @media (max-width: 768px) {
@@ -224,21 +232,21 @@
     .main { margin-left: 0; width: 100%; max-width: 100vw; overflow-x: hidden; } 
     .hamburger { display: block; }
     
-    /* Topbar - Fix Tombol dan Date Sejajar */
+    /* Topbar */
     .topbar { flex-direction: column; align-items: stretch; padding: 12px 16px; gap: 12px; }
     .topbar-title { font-size: 22px; }
     .topbar-right { width: 100%; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; align-items: center; }
     .topbar-right > input[type="date"] { flex: 1; min-width: 120px; }
     .topbar-right > .btn-primary { flex: 1; justify-content: center; }
-    #syncText { display: none; } /* Hanya tampilkan titik sync di HP */
+    #syncText { display: none; }
     
     /* Filter Bar - Rapi tersusun ke bawah */
-    .filter-bar { flex-direction: column; align-items: stretch; gap: 10px; padding: 16px; }
-    .filter-bar select, .filter-bar input { width: 100% !important; max-width: 100%; }
-    .filter-bar label { margin-bottom: -4px; margin-top: 4px; }
+    .filter-bar { flex-direction: column; align-items: stretch; gap: 12px; padding: 16px; }
+    .filter-bar > select, .filter-bar > input, .filter-bar > button { width: 100% !important; flex: none !important; margin: 0; }
+    .filter-bar label { margin-bottom: -6px; margin-top: 4px; display: block; }
     .filter-bar label:first-child { margin-top: 0; }
     
-    /* Tombol Aksi di Atas Tabel (Tambah Massal & Tambah Siswa) */
+    /* Tombol Aksi di Atas Tabel */
     .top-actions { flex-direction: column !important; align-items: stretch !important; }
     .top-actions .filter-bar { width: 100%; margin-bottom: 12px !important; }
     .top-actions .btn-group { width: 100%; display: flex; }
@@ -249,7 +257,7 @@
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
     .charts-grid { grid-template-columns: 1fr; }
     
-    /* Absensi Row Adjustments */
+    /* Absensi Row */
     .absen-row { grid-template-columns: 32px 1fr; }
     .absen-status { grid-column: 1 / -1; margin-top: 5px; }
     
@@ -371,7 +379,7 @@
       <div class="topbar-right">
         <div id="syncStatus" style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:5px 10px;border-radius:20px;background:var(--gray-100);color:var(--text-muted); transition:all 0.3s ease">
           <span id="syncDot" style="width:7px;height:7px;border-radius:50%;background:#9ca3af;display:inline-block;"></span>
-          <span id="syncText">Syncing</span>
+          <span id="syncText" style="display: none;">Syncing</span>
         </div>
         
         <input type="date" id="globalDate" style="font-size:13px;padding:7px 10px; width: 130px;" onchange="renderDashboard(); renderAbsensi();" />
@@ -407,7 +415,7 @@
           </div>
           <div style="width:1px;background:var(--border-color);height:24px;margin:0 4px"></div>
           <label>Kelas spesifik:</label>
-          <select id="dashKelasSpesifik" onchange="setDashFilterSpesifik(this.value)" style="min-width:120px; width:auto">
+          <select id="dashKelasSpesifik" onchange="setDashFilterSpesifik(this.value)">
             <option value="">— pilih kelas —</option>
           </select>
           <span id="dashFilterLabel" style="font-size:12px;color:var(--text-muted);margin-left:4px"></span>
@@ -427,9 +435,9 @@
 
       <div class="page" id="page-absensi">
         <div class="filter-bar">
-          <label>Kelas:</label><select id="absenKelas" onchange="renderAbsensi()" style="width:auto"><option value="">Pilih Kelas</option></select>
-          <label>Tanggal:</label><input type="date" id="absenDate" onchange="renderAbsensi()" style="width:auto" />
-          <input type="text" placeholder="Cari siswa..." id="absenSearch" oninput="renderAbsensi()" style="flex:1;min-width:160px" />
+          <label>Kelas:</label><select id="absenKelas" onchange="renderAbsensi()"><option value="">Pilih Kelas</option></select>
+          <label>Tanggal:</label><input type="date" id="absenDate" onchange="renderAbsensi()" />
+          <input type="text" placeholder="Cari siswa..." id="absenSearch" oninput="renderAbsensi()" />
           <button class="btn btn-outline btn-sm" onclick="setAllStatus('H')">Tandai Semua Hadir</button>
         </div>
         <div style="margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -452,9 +460,9 @@
         
         <div id="tab-manual">
           <div class="filter-bar">
-            <label>Kelas:</label><select id="nilaiKelas" onchange="renderNilaiTable()" style="width:auto"><option value="">Pilih Kelas</option></select>
-            <label>Jenis:</label><select id="nilaiJenis" style="width:auto"><option value="ulangan_harian">Ulangan Harian</option><option value="latihan_soal">Latihan Soal</option></select>
-            <label>Nama/Sesi:</label><input type="text" id="nilaiSesi" placeholder="cth: UH1, Latihan Bab 2" style="width:180px" />
+            <label>Kelas:</label><select id="nilaiKelas" onchange="renderNilaiTable()"><option value="">Pilih Kelas</option></select>
+            <label>Jenis:</label><select id="nilaiJenis"><option value="ulangan_harian">Ulangan Harian</option><option value="latihan_soal">Latihan Soal</option></select>
+            <label>Nama/Sesi:</label><input type="text" id="nilaiSesi" placeholder="cth: UH1, Latihan Bab 2" />
           </div>
           <div class="card">
             <div class="card-header"><span class="card-title">Tabel Input Nilai</span><button class="btn btn-primary btn-sm" onclick="simpanNilai()">💾 Simpan Nilai</button></div>
@@ -479,9 +487,9 @@
 
         <div id="tab-lihat" style="display:none">
           <div class="filter-bar">
-            <label>Kelas:</label><select id="lihatKelas" onchange="renderLihatNilai()" style="width:auto"><option value="">Semua</option></select>
-            <label>Jenis:</label><select id="lihatJenis" onchange="renderLihatNilai()" style="width:auto"><option value="">Semua</option><option value="ulangan_harian">Ulangan Harian</option><option value="latihan_soal">Latihan Soal</option></select>
-            <label>Sort:</label><select id="lihatSort" onchange="renderLihatNilai()" style="width:auto"><option value="nama">Nama A-Z</option><option value="nilai_desc">Nilai Tertinggi</option><option value="nilai_asc">Nilai Terendah</option><option value="rata_desc">Rata-rata Tertinggi</option></select>
+            <label>Kelas:</label><select id="lihatKelas" onchange="renderLihatNilai()"><option value="">Semua</option></select>
+            <label>Jenis:</label><select id="lihatJenis" onchange="renderLihatNilai()"><option value="">Semua</option><option value="ulangan_harian">Ulangan Harian</option><option value="latihan_soal">Latihan Soal</option></select>
+            <label>Sort:</label><select id="lihatSort" onchange="renderLihatNilai()"><option value="nama">Nama A-Z</option><option value="nilai_desc">Nilai Tertinggi</option><option value="nilai_asc">Nilai Terendah</option><option value="rata_desc">Rata-rata Tertinggi</option></select>
           </div>
           <div class="card"><div class="table-wrap scroll-table" id="lihatNilaiWrap"></div></div>
         </div>
@@ -489,9 +497,9 @@
 
       <div class="page" id="page-daftar">
         <div class="filter-bar">
-          <label>Kelas:</label><select id="daftarKelas" onchange="renderDaftar()" style="width:auto"><option value="">Semua</option></select>
-          <input type="text" placeholder="Cari nama / NIS..." id="daftarSearch" oninput="renderDaftar()" style="flex:1;min-width:160px" />
-          <label>Sort:</label><select id="daftarSort" onchange="renderDaftar()" style="width:auto"><option value="absen">No. Absen</option><option value="nama">Nama A-Z</option><option value="nilai_desc">Nilai Tertinggi</option><option value="kehadiran_desc">Kehadiran Terbaik</option></select>
+          <label>Kelas:</label><select id="daftarKelas" onchange="renderDaftar()"><option value="">Semua</option></select>
+          <input type="text" placeholder="Cari nama / NIS..." id="daftarSearch" oninput="renderDaftar()" />
+          <label>Sort:</label><select id="daftarSort" onchange="renderDaftar()"><option value="absen">No. Absen</option><option value="nama">Nama A-Z</option><option value="nilai_desc">Nilai Tertinggi</option><option value="kehadiran_desc">Kehadiran Terbaik</option></select>
         </div>
         <div class="card">
           <div class="card-header"><span class="card-title" id="daftarCount">Daftar Siswa Master</span><button class="btn btn-outline btn-sm" onclick="openExportModal()">📄 Export PDF</button></div>
@@ -500,7 +508,7 @@
       </div>
 
       <div class="page" id="page-analitik">
-        <div class="filter-bar"><label>Kelas Filter Global:</label><select id="analitikKelas" onchange="renderAnalitik()" style="width:auto"><option value="">Semua</option></select></div>
+        <div class="filter-bar"><label>Kelas Filter Global:</label><select id="analitikKelas" onchange="renderAnalitik()"><option value="">Semua</option></select></div>
         <div id="analitikStats" class="stats-grid"></div>
         <div class="charts-grid" id="analitikChartsGrid" style="display: grid;">
           <div class="card" style="grid-column: 1/-1"><div class="card-header"><span class="card-title">Nilai Rata-rata Per Siswa</span></div><div style="position:relative;height:260px"><canvas id="chartRata"></canvas></div></div>
@@ -508,7 +516,7 @@
           <div class="card" style="grid-column: 1/-1">
             <div class="card-header">
               <span class="card-title">Tren Kenaikan Nilai Kelas (Per Sesi)</span>
-              <select id="analitikTrenJenis" onchange="renderAnalitik()" style="width:auto; padding: 4px 8px; font-size:12px;">
+              <select id="analitikTrenJenis" onchange="renderAnalitik()" style="padding: 4px 8px; font-size:12px; border-radius: 8px;">
                 <option value="ulangan_harian">Ulangan Harian</option>
                 <option value="latihan_soal">Latihan Soal</option>
               </select>
@@ -524,11 +532,11 @@
       <div class="page" id="page-kelola-nilai">
         <div class="filter-bar">
           <label>Filter Kelas:</label>
-          <select id="knKelas" onchange="renderKelolaNilai()" style="width:auto"><option value="">Semua Kelas</option></select>
+          <select id="knKelas" onchange="renderKelolaNilai()"><option value="">Semua Kelas</option></select>
           <label>Jenis:</label>
-          <select id="knJenis" onchange="renderKelolaNilai()" style="width:auto"><option value="">Semua</option><option value="ulangan_harian">Ulangan Harian</option><option value="latihan_soal">Latihan Soal</option></select>
+          <select id="knJenis" onchange="renderKelolaNilai()"><option value="">Semua</option><option value="ulangan_harian">Ulangan Harian</option><option value="latihan_soal">Latihan Soal</option></select>
           <label>Sesi:</label>
-          <select id="knSesi" onchange="renderKelolaNilai()" style="width:auto"><option value="">Semua Sesi</option></select>
+          <select id="knSesi" onchange="renderKelolaNilai()"><option value="">Semua Sesi</option></select>
         </div>
         <div class="card">
           <div class="card-header">
@@ -541,10 +549,10 @@
 
       <div class="page" id="page-siswa">
         <div class="top-actions">
-          <div class="filter-bar" style="margin-bottom:0;flex:1"><label>Kelas:</label><select id="kelolaKelas" onchange="renderKelolaSiswa()" style="width:auto"><option value="">Semua</option></select><input type="text" placeholder="Cari Siswa Master..." id="kelolaSearch" oninput="renderKelolaSiswa()" style="flex:1" /></div>
+          <div class="filter-bar" style="margin-bottom:0;flex:1"><label>Kelas:</label><select id="kelolaKelas" onchange="renderKelolaSiswa()"><option value="">Semua</option></select><input type="text" placeholder="Cari Siswa Master..." id="kelolaSearch" oninput="renderKelolaSiswa()" style="flex:1" /></div>
           <div class="btn-group"><button class="btn btn-outline btn-sm" onclick="openBulkModal()">📋 Tambah Massal</button><button class="btn btn-primary btn-sm" onclick="openAddModal()">+ Tambah Siswa</button></div>
         </div>
-        <div class="card"><div class="table-wrap scroll-table" id="kelolaSiswaTable"></div></div>
+        <div class="card" style="margin-top:16px;"><div class="table-wrap scroll-table" id="kelolaSiswaTable"></div></div>
       </div>
     </div>
   </main>
@@ -556,7 +564,7 @@
     <div class="modal-body">
       <div class="form-row"><div class="form-group"><label class="form-label">NIS</label><input type="text" id="addNis" class="form-input" /></div><div class="form-group"><label class="form-label">No. Absen</label><input type="number" id="addNoAbsen" class="form-input" /></div></div>
       <div class="form-group"><label class="form-label">Nama Lengkap</label><input type="text" id="addNama" class="form-input" /></div>
-      <div class="form-row"><div class="form-group"><label class="form-label">Kelas</label><input type="text" id="addKelas" placeholder="cth: 7A" class="form-input" /></div><div class="form-group"><label class="form-label">Jenis Kelamin</label><select id="addJK" class="form-input"><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Kelas</label><input type="text" id="addKelas" placeholder="cth: 7A" class="form-input" style="text-transform: uppercase;" /></div><div class="form-group"><label class="form-label">Jenis Kelamin</label><select id="addJK" class="form-input"><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div></div>
     </div>
     <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('modalAdd')">Batal</button><button class="btn btn-primary" onclick="saveSiswa()">Simpan</button></div>
   </div>
@@ -566,8 +574,12 @@
   <div class="modal">
     <div class="modal-header"><span class="modal-title">Tambah Siswa Massal</span><button class="btn btn-outline btn-sm" onclick="closeModal('modalBulk')">✕</button></div>
     <div class="modal-body">
-      <div class="form-group"><label class="form-label">Kelas Default</label><input type="text" id="bulkKelas" placeholder="cth: 7A" class="form-input" /></div>
-      <div class="form-group"><label class="form-label">Data Siswa (paste dari Excel)</label><textarea id="bulkData" style="width:100%;height:150px;font-family:monospace;padding:10px"></textarea></div>
+      <div class="form-group"><label class="form-label">Kelas Default</label><input type="text" id="bulkKelas" placeholder="cth: 7A" class="form-input" style="text-transform: uppercase;" /></div>
+      <div class="form-group">
+        <label class="form-label">Data Siswa (paste dari Excel)</label>
+        <p style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Format urutan kolom: <strong>No. Absen | NIS | Nama Siswa | Kelas | Jenis Kelamin</strong> (pisahkan dengan tab/koma, 1 baris = 1 siswa)</p>
+        <textarea id="bulkData" style="width:100%;height:150px;font-family:monospace;padding:10px"></textarea>
+      </div>
       <button class="btn btn-outline btn-sm" onclick="previewBulk()">🔍 Preview</button>
       <div id="bulkPreview" style="margin-top:12px"></div>
     </div>
@@ -666,7 +678,7 @@ function doRegister() {
 
   if(usersList.find(u => u.username === username)) return alert('Username sudah dipakai!');
 
-  const kelasArr = kelasRaw.split(',').map(k => k.trim()).filter(k => k);
+  const kelasArr = kelasRaw.split(',').map(k => k.trim().toUpperCase()).filter(k => k);
   
   const newUser = { id: 'gr_' + Date.now(), nama, mapel, kelas: kelasArr, username, password: pass };
   usersList.push(newUser);
@@ -918,11 +930,8 @@ function renderDashboard() {
   const top5 = sortList(filteredSiswa, 'poin_desc').slice(0,5);
   if(chartPoin) chartPoin.destroy();
   chartPoin = new Chart(document.getElementById('chartPoin'), {
-    type:'bar', data:{labels:top5.map(s=>s.nama), datasets:[{label:'Poin',data:top5.map(s=>getTotalPoin(s.id)),backgroundColor:'#7c3aed',borderRadius:6}]},
-    options:{ 
-        indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
-        scales: { y: { ticks: { callback: function(val) { return shortName(this.getLabelForValue(val)); } } } }
-    }
+    type:'bar', data:{labels:top5.map(s=>shortName(s.nama)), datasets:[{label:'Poin',data:top5.map(s=>getTotalPoin(s.id)),backgroundColor:'#7c3aed',borderRadius:6}]},
+    options:{ indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}} }
   });
 
   const days=[], pcts=[];
@@ -1008,7 +1017,7 @@ function parsePaste() {
     if(cols.length < 2) { errors.push(`Baris ${i+1}: format salah`); return; } 
     let noAbsen, nama, nilai; 
     
-    // Perbaikan Input Format: No Absen | Nama | Nilai
+    // Format: No Absen | Nama | Nilai
     if(cols.length >= 3) { noAbsen=parseInt(cols[0]); nama=cols[1]; nilai=parseFloat(cols[2]); } 
     else { nama=cols[0]; nilai=parseFloat(cols[1]); } 
     
@@ -1113,8 +1122,20 @@ function renderAnalitik() {
   let listSortRata = sortList(list, 'rata_desc').slice(0,20);
   if(chartRata) chartRata.destroy();
   chartRata = new Chart(document.getElementById('chartRata'), { 
-    type:'bar', data:{labels:listSortRata.map(s=>s.nama),datasets:[{label:'Rata-rata',data:listSortRata.map(s=>getRataValue(s.id)),backgroundColor:'#3b82f6',borderRadius:6}]}, 
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}, scales: { x: { ticks: { callback: function(val) { return shortName(this.getLabelForValue(val)); } } } }} 
+    type:'bar', data:{
+      labels:listSortRata.map(s=>shortName(s.nama)),
+      datasets:[{
+        label:'Rata-rata',
+        data:listSortRata.map(s=>getRataValue(s.id)),
+        backgroundColor:'#3b82f6',
+        borderRadius:6
+      }]
+    }, 
+    options:{
+      responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, 
+      // Tooltip memunculkan nama penuh
+      plugins: { tooltip: { callbacks: { title: function(ctx) { return listSortRata[ctx[0].dataIndex].nama; } } } }
+    } 
   });
   
   const dist=[0,0,0,0,0]; list.forEach(s=>{const v=getRataValue(s.id);if(v){if(v<60)dist[0]++;else if(v<70)dist[1]++;else if(v<80)dist[2]++;else if(v<90)dist[3]++;else dist[4]++;}});
@@ -1122,8 +1143,19 @@ function renderAnalitik() {
   
   const top10 = sortList(list,'poin_desc').slice(0,10);
   if(chartAktif2) chartAktif2.destroy(); chartAktif2 = new Chart(document.getElementById('chartAktif'), { 
-    type:'bar', data:{labels:top10.map(s=>s.nama),datasets:[{label:'Poin',data:top10.map(s=>getTotalPoin(s.id)),backgroundColor:'#7c3aed',borderRadius:6}]}, 
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}, scales: { x: { ticks: { callback: function(val) { return shortName(this.getLabelForValue(val)); } } } }} 
+    type:'bar', data:{
+      labels:top10.map(s=>shortName(s.nama)),
+      datasets:[{
+        label:'Poin',
+        data:top10.map(s=>getTotalPoin(s.id)),
+        backgroundColor:'#7c3aed',
+        borderRadius:6
+      }]
+    }, 
+    options:{
+      responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      plugins: { tooltip: { callbacks: { title: function(ctx) { return top10[ctx[0].dataIndex].nama; } } } }
+    } 
   });
 
   // TREND NAIK/TURUN NILAI LINE CHART
@@ -1162,10 +1194,47 @@ function renderAnalitik() {
 function renderKelolaSiswa() { const kelas = document.getElementById('kelolaKelas').value; const search = document.getElementById('kelolaSearch').value.toLowerCase(); let list = getFilteredSiswa(kelas); if(search) list=list.filter(s=>s.nama.toLowerCase().includes(search)||s.nis.includes(search)); list.sort((a,b)=>(a.kelas+a.noAbsen).localeCompare(b.kelas+String(b.noAbsen||0).padStart(3,'0'))); if(!list.length) { document.getElementById('kelolaSiswaTable').innerHTML='<div class="empty-state"><p>Siswa tidak ditemukan.</p></div>'; return; } document.getElementById('kelolaSiswaTable').innerHTML = `<table><thead><tr><th>No</th><th>NIS</th><th>Nama</th><th>Kelas</th><th>Aksi</th></tr></thead><tbody>${list.map((s,i)=>`<tr><td>${s.noAbsen||'-'}</td><td>${s.nis}</td><td>${s.nama}</td><td>${s.kelas}</td><td><button class="btn btn-outline btn-sm" onclick="editSiswa('${s.id}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteSiswa('${s.id}')">Hapus</button></td></tr>`).join('')}</tbody></table>`; }
 function openAddModal() { editingSiswaId = null; document.getElementById('modalAddTitle').textContent = 'Tambah Siswa'; ['addNis','addNama','addNoAbsen'].forEach(id=>document.getElementById(id).value=''); document.getElementById('addKelas').value = currentUser.kelas[0]||''; document.getElementById('modalAdd').classList.add('open'); }
 function editSiswa(id) { const s = siswaList.find(x=>x.id===id); if(!s) return; editingSiswaId = id; document.getElementById('modalAddTitle').textContent = 'Edit Siswa'; document.getElementById('addNis').value = s.nis; document.getElementById('addNama').value = s.nama; document.getElementById('addNoAbsen').value = s.noAbsen||''; document.getElementById('addKelas').value = s.kelas; document.getElementById('addJK').value = s.jk||'L'; document.getElementById('modalAdd').classList.add('open'); }
-function saveSiswa() { const nis = document.getElementById('addNis').value.trim(); const nama = document.getElementById('addNama').value.trim(); const noAbsen = parseInt(document.getElementById('addNoAbsen').value)||0; const kelas = document.getElementById('addKelas').value; const jk = document.getElementById('addJK').value; if(!nama || !nis) return alert('Nama dan NIS wajib diisi!'); if(editingSiswaId) { const idx = siswaList.findIndex(s=>s.id===editingSiswaId); if(idx>=0) siswaList[idx] = {...siswaList[idx], nis, nama, noAbsen, kelas, jk}; } else { siswaList.push({id:'sw_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), nis, nama, noAbsen, kelas, jk}); } save(); rebuildKelasOptions(); closeModal('modalAdd'); renderKelolaSiswa(); showToast('Siswa disimpan!'); }
+function saveSiswa() { 
+  const nis = document.getElementById('addNis').value.trim(); 
+  const nama = document.getElementById('addNama').value.trim(); 
+  const noAbsen = parseInt(document.getElementById('addNoAbsen').value)||0; 
+  const kelas = document.getElementById('addKelas').value.trim().toUpperCase(); 
+  const jk = document.getElementById('addJK').value; 
+  if(!nama || !nis) return alert('Nama dan NIS wajib diisi!'); 
+  if(editingSiswaId) { 
+    const idx = siswaList.findIndex(s=>s.id===editingSiswaId); 
+    if(idx>=0) siswaList[idx] = {...siswaList[idx], nis, nama, noAbsen, kelas, jk}; 
+  } else { 
+    siswaList.push({id:'sw_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), nis, nama, noAbsen, kelas, jk}); 
+  } 
+  save(); rebuildKelasOptions(); closeModal('modalAdd'); renderKelolaSiswa(); showToast('Siswa disimpan!'); 
+}
 function deleteSiswa(id) { if(!confirm('Hapus siswa ini dari database sekolah?')) return; siswaList = siswaList.filter(s=>s.id!==id); Object.keys(absensiData).forEach(k=>{ if(absensiData[k].siswaId===id) delete absensiData[k]; }); Object.keys(nilaiData).forEach(k=>{ if(nilaiData[k].siswaId===id) delete nilaiData[k]; }); save(); rebuildKelasOptions(); renderKelolaSiswa(); }
 function openBulkModal() { document.getElementById('bulkData').value=''; document.getElementById('bulkPreview').innerHTML=''; document.getElementById('bulkKelas').value=currentUser.kelas[0]||''; document.getElementById('modalBulk').classList.add('open'); }
-function previewBulk() { const raw = document.getElementById('bulkData').value.trim(); const defKelas = document.getElementById('bulkKelas').value; const lines = raw.split('\n').filter(l=>l.trim()); bulkParsed = []; lines.forEach((line, i) => { const cols = line.split(/\t|,/).map(c=>c.trim()); if(cols.length < 2) return; let noAbsen, nis, nama, kelas, jk; if(cols.length >= 5) { [noAbsen,nis,nama,kelas,jk]=cols; } else if(cols.length === 4) { [noAbsen,nis,nama,kelas]=cols; } else if(cols.length === 3) { [noAbsen,nis,nama]=cols; kelas=defKelas; } else { [noAbsen,nama]=cols; kelas=defKelas; } if(!kelas) return; bulkParsed.push({noAbsen:parseInt(noAbsen)||i+1, nis:nis||'NIS_'+Date.now()+i, nama:nama||'?', kelas, jk:jk||'L'}); }); document.getElementById('bulkPreview').innerHTML = `<div class="badge badge-success" style="margin-bottom:8px">${bulkParsed.length} siswa siap diimport</div>`; }
+function previewBulk() { 
+  const raw = document.getElementById('bulkData').value.trim(); 
+  const defKelas = document.getElementById('bulkKelas').value.trim().toUpperCase(); 
+  const lines = raw.split('\n').filter(l=>l.trim()); 
+  bulkParsed = []; 
+  lines.forEach((line, i) => { 
+    const cols = line.split(/\t|,/).map(c=>c.trim()); 
+    if(cols.length < 2) return; 
+    let noAbsen, nis, nama, kelas, jk; 
+    if(cols.length >= 5) { [noAbsen,nis,nama,kelas,jk]=cols; } 
+    else if(cols.length === 4) { [noAbsen,nis,nama,kelas]=cols; } 
+    else if(cols.length === 3) { [noAbsen,nis,nama]=cols; kelas=defKelas; } 
+    else { [noAbsen,nama]=cols; kelas=defKelas; } 
+    if(!kelas) return; 
+    bulkParsed.push({
+      noAbsen:parseInt(noAbsen)||i+1, 
+      nis:nis||'NIS_'+Date.now()+i, 
+      nama:nama||'?', 
+      kelas:kelas.toUpperCase(), 
+      jk:jk||'L'
+    }); 
+  }); 
+  document.getElementById('bulkPreview').innerHTML = `<div class="badge badge-success" style="margin-bottom:8px">${bulkParsed.length} siswa siap diimport</div>`; 
+}
 function saveBulk() { if(!bulkParsed.length) previewBulk(); if(!bulkParsed.length) return; bulkParsed.forEach(b => { siswaList.push({id:'sw_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), ...b}); }); save(); rebuildKelasOptions(); closeModal('modalBulk'); renderKelolaSiswa(); showToast(bulkParsed.length+' siswa berhasil ditambah!'); bulkParsed=[]; }
 
 // ========== EXPORT PDF ==========
