@@ -1269,6 +1269,7 @@ function previewBulk() {
 function saveBulk() { if(!bulkParsed.length) previewBulk(); if(!bulkParsed.length) return; bulkParsed.forEach(b => { siswaList.push({id:'sw_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), ...b}); }); setSiswaData(siswaList); save(); rebuildKelasOptions(); closeModal('modalBulk'); renderKelolaSiswa(); showToast(bulkParsed.length+' siswa berhasil ditambah!'); bulkParsed=[]; }
 
 // ========== EXPORT PDF MODERN (MODEL 4) ==========
+  function openExportModal() { document.getElementById('expJudul').value = 'Laporan '+currentUser.mapel; document.getElementById('modalExport').classList.add('open'); }
 async function doExport() {
   const kelas = document.getElementById('expKelas').value;
   const format = document.getElementById('expFormat').value;
