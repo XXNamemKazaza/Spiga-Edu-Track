@@ -1438,6 +1438,16 @@ function init() {
 // Inisialisasi awal aplikasi
 init();
 
+// --- LAPIS 1: ANTI INSPECT ELEMENT & KLIK KANAN ---
+document.addEventListener('contextmenu', event => event.preventDefault());
+document.onkeydown = function(e) {
+  if(e.keyCode == 123) return false; // Blokir F12
+  if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false; // Blokir Ctrl+Shift+I
+  if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) return false; // Blokir Ctrl+Shift+C
+  if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false; // Blokir Ctrl+Shift+J
+  if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false; // Blokir Ctrl+U (View Source)
+}
+
 </script>
 </body>
 </html>
