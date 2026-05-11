@@ -1429,33 +1429,6 @@ async function doExport() {
   showToast('Laporan PDF berhasil di-download!');
   closeModal('modalExport');
 }
-  
-  showToast('Sedang membuat PDF, mohon tunggu sebentar...');
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  const pw = doc.internal.pageSize.getWidth(); const ph = doc.internal.pageSize.getHeight();
-
-  doc.setFillColor(37, 99, 235); doc.rect(0, 0, pw, 10, 'F'); doc.rect(0, ph - 10, pw, 10, 'F'); 
-  doc.setFontSize(24); doc.setFont('helvetica', 'bold'); doc.setTextColor(31, 41, 55); doc.text(judul.toUpperCase(), pw/2, ph/2 - 20, {align: 'center'});
-  doc.setFontSize(14); doc.setFont('helvetica', 'bold'); doc.setTextColor(37, 99, 235); doc.text('SMP PGRI 3 DENPASAR', pw/2, ph/2 + 18, {align: 'center'});
-  
-  doc.setFontSize(12); doc.setFont('helvetica', 'normal'); doc.setTextColor(107, 114, 128);
-  doc.text('Guru: ' + currentUser.nama + '  |  Mapel: ' + currentUser.mapel, pw/2, ph/2 + 28, {align: 'center'});
-  doc.text('Tahun Ajaran 2025/2026', pw/2, ph/2 + 36, {align: 'center'});
-
-  doc.addPage();
-  doc.setFontSize(14); doc.setFont('helvetica', 'bold'); doc.setTextColor(31, 41, 55); doc.text('Tabel Data Kehadiran, Nilai & Poin', 14, 20);
-  
-  doc.autoTable({
-    startY: 28, head: [['No', 'NIS', 'Nama Siswa', 'Kelas', 'Kehadiran', 'Rata Nilai', 'Total Poin']],
-    body: list.map((s,i) => [i+1, s.nis, s.nama, s.kelas, getKehadiranPct(s.id)+'%', getRataValue(s.id)||'-', getTotalPoin(s.id)]),
-    styles: { fontSize: 9, cellPadding: 3 }, headStyles: { fillColor: [37, 99, 235], textColor: 255 }, alternateRowStyles: { fillColor: [245, 247, 255] }
-  });
-
-  doc.save(judul.replace(/\s+/g,'_')+'.pdf');
-  showToast('Laporan PDF berhasil di-download!');
-  closeModal('modalExport');
-}
 
 // ========== OTENTIKASI & APLIKASI ==========
 function toggleAuth(type) { document.getElementById('formLogin').style.display = type === 'login' ? 'block' : 'none'; document.getElementById('formRegister').style.display = type === 'register' ? 'block' : 'none'; }
