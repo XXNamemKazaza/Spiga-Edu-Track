@@ -278,6 +278,50 @@
 
   .empty-state { text-align: center; padding: 48px 24px; color: var(--gray-400); animation: smoothSlideUp 0.5s ease forwards; }
   .scroll-table { max-height: 480px; overflow-y: auto; }
+  /* ==================================================
+     ESTETIKA TOMBOL KELOLA SISWA (UPDATE)
+     ================================================== */
+  .top-actions-wrapper {
+    display: flex;
+    gap: 16px;
+    align-items: center; /* Sejajar estetik dengan filter bar */
+  }
+  .top-actions-wrapper .filter-bar {
+    flex: 1; /* Mengisi sisa ruang kiri */
+    margin-bottom: 0;
+  }
+  .top-actions-wrapper .btn-group-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Jarak atas bawah tombol */
+    min-width: 170px; /* Ukuran tombol lebih lebar */
+  }
+  .top-actions-wrapper .btn-group-vertical .btn {
+    width: 100%;
+    padding: 10px 16px; /* Tombol agak gede dikit */
+    font-size: 13.5px;
+    box-shadow: var(--shadow);
+  }
+
+  /* Penyesuaian Mobile: Tombol jadi sejajar kiri-kanan biar hemat layar HP */
+  @media (max-width: 768px) {
+    .top-actions-wrapper {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .top-actions-wrapper .filter-bar {
+      margin-bottom: 12px;
+      width: 100%;
+    }
+    .top-actions-wrapper .btn-group-vertical {
+      flex-direction: row; 
+      width: 100%;
+    }
+    .top-actions-wrapper .btn-group-vertical .btn {
+      flex: 1;
+      padding: 12px 10px;
+    }
+  }
 </style>
 </head>
 <body>
@@ -571,9 +615,16 @@
       </div>
 
       <div class="page" id="page-siswa">
-        <div class="top-actions">
-          <div class="filter-bar" style="margin-bottom:0;flex:1"><label>Kelas:</label><select id="kelolaKelas" onchange="renderKelolaSiswa()"><option value="">Semua</option></select><input type="text" placeholder="Cari nama, NIS, absen..." id="kelolaSearch" oninput="renderKelolaSiswa()" style="flex:1" /></div>
-          <div class="btn-group"><button class="btn btn-outline btn-sm" onclick="openBulkModal()">📋 Tambah Massal</button><button class="btn btn-primary btn-sm" onclick="openAddModal()">+ Tambah Siswa</button></div>
+        <div class="top-actions-wrapper">
+          <div class="filter-bar" style="margin-bottom:0;flex:1">
+            <label>Kelas:</label>
+            <select id="kelolaKelas" onchange="renderKelolaSiswa()"><option value="">Semua</option></select>
+            <input type="text" placeholder="Cari nama, NIS, absen..." id="kelolaSearch" oninput="renderKelolaSiswa()" style="flex:1" />
+          </div>
+          <div class="btn-group-vertical">
+            <button class="btn btn-outline" onclick="openBulkModal()">📋 Tambah Massal</button>
+            <button class="btn btn-primary" onclick="openAddModal()">+ Tambah Siswa</button>
+          </div>
         </div>
         <div class="card" style="margin-top:16px;"><div class="table-wrap scroll-table" id="kelolaSiswaTable"></div></div>
       </div>
