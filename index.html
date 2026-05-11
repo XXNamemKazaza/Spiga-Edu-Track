@@ -1268,8 +1268,7 @@ function previewBulk() {
 }
 function saveBulk() { if(!bulkParsed.length) previewBulk(); if(!bulkParsed.length) return; bulkParsed.forEach(b => { siswaList.push({id:'sw_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), ...b}); }); setSiswaData(siswaList); save(); rebuildKelasOptions(); closeModal('modalBulk'); renderKelolaSiswa(); showToast(bulkParsed.length+' siswa berhasil ditambah!'); bulkParsed=[]; }
 
-// ========== EXPORT PDF ==========
-function openExportModal() { document.getElementById('expJudul').value = 'Laporan '+currentUser.mapel; document.getElementById('modalExport').classList.add('open'); }
+// ========== EXPORT PDF MODERN (MODEL 4) ==========
 async function doExport() {
   const kelas = document.getElementById('expKelas').value;
   const format = document.getElementById('expFormat').value;
@@ -1283,6 +1282,152 @@ async function doExport() {
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv], {type:'text/csv'})); a.download = judul+'.csv'; a.click();
     showToast('CSV berhasil diexport!'); closeModal('modalExport'); return;
   }
+  
+  showToast('Sedang merakit PDF Modern, mohon tunggu...');
+  const { jsPDF } = window.jspdf;
+  
+  // 1. SETTING LANDSCAPE
+  const doc = new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const pw = doc.internal.pageSize.getWidth(); // Lebar ~297mm
+  const ph = doc.internal.pageSize.getHeight(); // Tinggi ~210mm
+
+  // Kalkulasi Data Summary
+  const totalSiswa = list.length;
+  const rataKelas = totalSiswa ? Math.round(list.reduce((sum, s) => sum + getRataValue(s.id), 0) / totalSiswa) : 0;
+  const hadirKelas = totalSiswa ? Math.round(list.reduce((sum, s) => sum + getKehadiranPct(s.id), 0) / totalSiswa) : 0;
+
+  // 2. HEADER MODERN (Aksen Ungu)
+  doc.setFillColor(124, 58, 237); // Warna Ungu (var(--purple))
+  doc.rect(0, 0, pw, 25, 'F');
+  
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(20);
+  doc.setFont('helvetica', 'bold');
+  doc.text('SPIGA EDUTRACK', 14, 15);
+  
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text('SMP PGRI 3 DENPASAR | TAHUN AJARAN 2025/2026', 14, 21);
+
+  // Info Kanan Header
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text(judul.toUpperCase(), pw - 14, 15, {align: 'right'});
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Guru: ${currentUser.nama}  |  Mapel: ${currentUser.mapel}`, pw - 14, 21, {align: 'right'});
+
+  // 3. SUMMARY CARDS
+  const cardY = 32;
+  const cardW = 60;
+  const cardH = 20;
+  
+  // Card 1: Total Siswa
+  doc.setDrawColor(229, 231, 235); doc.setFillColor(249, 250, 251);
+  doc.roundedRect(14, cardY, cardW, cardH, 3, 3, 'FD');
+  doc.setTextColor(107, 114, 128); doc.setFontSize(8); doc.text('TOTAL SISWA', 18, cardY + 7);
+  doc.setTextColor(31, 41, 55); doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.text(`${totalSiswa} Orang`, 18, cardY + 16);
+
+  // Card 2: Rata-rata Kelas
+  doc.setDrawColor(229, 231, 235); doc.setFillColor(249, 250, 251);
+  doc.roundedRect(14 + cardW + 10, cardY, cardW, cardH, 3, 3, 'FD');
+  doc.setTextColor(107, 114, 128); doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.text('RATA-RATA KELAS', 18 + cardW + 10, cardY + 7);
+  doc.setTextColor(217, 119, 6); // Orange
+  doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.text(`${rataKelas}`, 18 + cardW + 10, cardY + 16);
+
+  // Card 3: Kehadiran Kelas
+  doc.setDrawColor(229, 231, 235); doc.setFillColor(249, 250, 251);
+  doc.roundedRect(14 + (cardW * 2) + 20, cardY, cardW, cardH, 3, 3, 'FD');
+  doc.setTextColor(107, 114, 128); doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.text('RATA-RATA KEHADIRAN', 18 + (cardW * 2) + 20, cardY + 7);
+  doc.setTextColor(22, 163, 74); // Hijau
+  doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.text(`${hadirKelas}%`, 18 + (cardW * 2) + 20, cardY + 16);
+
+  // 4. TABEL DATA CERDAS
+  const sortedByNilai = [...list].sort((a,b) => getRataValue(b.id) - getRataValue(a.id));
+  
+  const tableData = list.map((s, i) => {
+    const pct = getKehadiranPct(s.id);
+    const rata = getRataValue(s.id);
+    const poin = getTotalPoin(s.id);
+    
+    // Kalkulasi Peringkat
+    const rank = sortedByNilai.findIndex(x => x.id === s.id) + 1;
+    let rankStr = rank.toString();
+    if(rank === 1) rankStr = '1 (Emas)';
+    else if(rank === 2) rankStr = '2 (Perak)';
+    else if(rank === 3) rankStr = '3 (Perunggu)';
+
+    return [ i + 1, s.nis, s.nama, s.kelas, pct + '%', rata || '-', poin, rankStr ];
+  });
+
+  doc.autoTable({
+    startY: cardY + cardH + 10,
+    head: [['No', 'NIS', 'Nama Siswa', 'Kelas', 'Kehadiran', 'Rata Nilai', 'Poin', 'Peringkat']],
+    body: tableData,
+    theme: 'grid',
+    styles: { fontSize: 9, cellPadding: 4, font: 'helvetica' },
+    headStyles: { fillColor: [124, 58, 237], textColor: 255, fontStyle: 'bold', halign: 'center' },
+    columnStyles: {
+        0: { halign: 'center', cellWidth: 12 },
+        1: { halign: 'center', cellWidth: 25 },
+        3: { halign: 'center', cellWidth: 20 },
+        4: { halign: 'center', cellWidth: 25 },
+        5: { halign: 'center', cellWidth: 25 },
+        6: { halign: 'center', cellWidth: 20 },
+        7: { halign: 'center', cellWidth: 35 }
+    },
+    alternateRowStyles: { fillColor: [245, 243, 255] }, // Zebra striping warna ungu muda
+    willDrawCell: function(data) {
+       // Highlight teks menjadi MERAH jika nilai di bawah 65
+       if (data.column.index === 5 && data.section === 'body') {
+           const val = parseInt(data.cell.raw);
+           if (val < 65) {
+               doc.setTextColor(220, 38, 38);
+               doc.setFont('helvetica', 'bold');
+           }
+       }
+       // Highlight Emas untuk Peringkat 1
+       if (data.column.index === 7 && data.section === 'body') {
+           if (data.cell.raw === '1 (Emas)') {
+               doc.setTextColor(217, 119, 6);
+               doc.setFont('helvetica', 'bold');
+           }
+       }
+    }
+  });
+
+  // 5. SIGNATURE BLOCK (TANDA TANGAN)
+  let finalY = doc.lastAutoTable.finalY + 20;
+  
+  // Jika tabel mepet ke bawah, buat halaman baru untuk tanda tangan
+  if (finalY > ph - 40) {
+      doc.addPage();
+      finalY = 30;
+  }
+
+  doc.setTextColor(31, 41, 55);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  
+  // Kiri: Kepala Sekolah
+  doc.text('Mengetahui,', 40, finalY);
+  doc.text('Kepala SMP PGRI 3 Denpasar', 40, finalY + 5);
+  doc.text('___________________________', 40, finalY + 25);
+  doc.text('NIP. ......................', 40, finalY + 30);
+
+  // Kanan: Guru
+  const dateStr = new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'});
+  doc.text(`Denpasar, ${dateStr}`, pw - 40, finalY, {align: 'center'});
+  doc.text('Guru Mata Pelajaran', pw - 40, finalY + 5, {align: 'center'});
+  doc.setFont('helvetica', 'bold');
+  doc.text(currentUser.nama, pw - 40, finalY + 25, {align: 'center'});
+  doc.setFont('helvetica', 'normal');
+  doc.text('NIP. ......................', pw - 40, finalY + 30, {align: 'center'});
+
+  doc.save(judul.replace(/\s+/g,'_')+'.pdf');
+  showToast('Laporan PDF berhasil di-download!');
+  closeModal('modalExport');
+}
   
   showToast('Sedang membuat PDF, mohon tunggu sebentar...');
   const { jsPDF } = window.jspdf;
