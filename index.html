@@ -667,21 +667,33 @@ function toggleAuth(type) {
   document.getElementById('formRegister').style.display = type === 'register' ? 'block' : 'none';
 }
 
-function doRegister() {
+async function doRegister() {
   const nama = document.getElementById('regNama').value.trim();
   const mapel = document.getElementById('regMapel').value.trim();
   const kelasRaw = document.getElementById('regKelas').value.trim();
   const username = document.getElementById('regUsername').value.trim();
   const pass = document.getElementById('regPassword').value.trim();
-  const pin = document.getElementById('regPin').value.trim();
+  const pinEntered = document.getElementById('regPin').value.trim();
 
-  // KODE RAHASIA ADMIN
-  const KODE_SEKOLAH = "SPIGA2526";
+  if(!nama || !mapel || !kelasRaw || !username || !pass || !pinEntered) return alert('Mohon lengkapi semua data!');
 
-  if(!nama || !mapel || !kelasRaw || !username || !pass || !pin) return alert('Mohon lengkapi semua data!');
-  
-  if(pin !== KODE_SEKOLAH) return alert('PIN / Kode Sekolah salah! Silakan hubungi Admin.');
+  // --- VALIDASI PIN KE SERVER (LEBIH AMAN) ---
+  showToast('Memvalidasi PIN Sekolah...');
+  try {
+    const response = await fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'check_pin', pin: pinEntered })
+    });
+    const result = await response.json();
+    
+    if (!result.success) {
+      return alert('PIN Sekolah salah! Silakan hubungi Admin untuk mendapatkan kode yang benar.');
+    }
+  } catch (err) {
+    return alert('Gagal terhubung ke server. Pastikan internet aktif.');
+  }
 
+  // Jika PIN benar, lanjutkan proses pendaftaran
   if(usersList.find(u => u.username === username)) return alert('Username sudah dipakai!');
 
   const kelasArr = kelasRaw.split(',').map(k => k.trim().toUpperCase()).filter(k => k);
@@ -692,6 +704,7 @@ function doRegister() {
   DB.set('currentUser', currentUser);
   save(); 
   initAppUI();
+  showToast('Akun Guru berhasil dibuat!');
 }
 
 function doLogin() {
